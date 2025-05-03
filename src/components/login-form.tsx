@@ -10,7 +10,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { signIn } from "@/lib/auth";
-import { useAuth } from "@/lib/context/AuthContext";
 import { useSettingsStore } from "@/lib/store/settingsStore";
 import { Loader2 } from "lucide-react";
 
