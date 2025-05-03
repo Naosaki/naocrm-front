@@ -181,7 +181,7 @@ export default function SettingsPage() {
                               onChange={handleLogoChange}
                             />
                             <p className="text-sm text-muted-foreground">
-                              Entrez l'URL d'une image pour l'utiliser comme logo
+                              Entrez l'URL d'une image pour l'utiliser comme logo.
                             </p>
                           </div>
                         </TabsContent>
@@ -281,7 +281,7 @@ export default function SettingsPage() {
                               }}
                             />
                             <p className="text-sm text-muted-foreground">
-                              Entrez l'URL d'une image pour l'utiliser comme image de connexion
+                              Entrez l'URL d'une image pour l'utiliser comme image de connexion.
                             </p>
                           </div>
                         </TabsContent>
