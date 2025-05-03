@@ -23,7 +23,6 @@ export function LoginForm({
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
-  const { user, loading } = useAuth();
   const { loginImage } = useSettingsStore()
 
 
