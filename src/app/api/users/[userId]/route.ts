@@ -17,7 +17,7 @@ export async function GET(
   context: { params: UserIdParams }
 ) {
   try {
-    const userId = context.params.userId;
+    const userId = (await context.params).userId;
 
     if (!userId) {
       return NextResponse.json(
