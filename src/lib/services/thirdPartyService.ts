@@ -26,7 +26,8 @@ const convertTimestamps = (data: FirestoreData): ThirdParty => {
   if (result.updatedAt && result.updatedAt instanceof Timestamp) {
     result.updatedAt = (result.updatedAt as Timestamp).toDate();
   }
-  return result as ThirdParty;
+  // Conversion sûre en utilisant une double assertion de type
+  return result as unknown as ThirdParty;
 };
 
 // Récupérer tous les clients

@@ -44,6 +44,7 @@ const convertTimestamps = (data: FirestoreData): Product => {
     }
   }
   
+  // Conversion sûre en utilisant une double assertion de type
   return result as unknown as Product;
 };
 
@@ -159,19 +160,11 @@ export const getProductsByCategory = async (category: string): Promise<Product[]
 // Rechercher des produits par nom
 export const searchProductsByName = async (name: string): Promise<Product[]> => {
   try {
-    // Firestore ne prend pas en charge les recherches insensibles à la casse ou les recherches partielles,
-    // donc nous récupérons tous les produits et filtrons côté client
-    const querySnapshot = await getDocs(collection(db, COLLECTION));
-    const products = querySnapshot.docs.map((doc) => {
-      return convertTimestamps({
-        id: doc.id,
-        ...doc.data(),
-      });
-    });
+    const products = await getAllProducts();
 
     // Filtrer les produits dont le nom contient la chaîne de recherche (insensible à la casse)
     return products.filter((product) =>
-      product.name.toLowerCase().includes(name.toLowerCase())
+      product.name?.toLowerCase().includes(name.toLowerCase())
     );
   } catch (error) {
     console.error('Erreur lors de la recherche de produits:', error);

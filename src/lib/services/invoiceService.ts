@@ -40,7 +40,7 @@ const convertTimestamps = (data: FirestoreData): Invoice => {
   if (result.date_validation) {
     if (result.date_validation instanceof Timestamp) {
       // Si c'est un timestamp Firestore, le convertir en Date
-      result.date_validation = result.date_validation.toDate();
+      result.date_validation = (result.date_validation as Timestamp).toDate();
     } else if (typeof result.date_validation === 'number') {
       // Si c'est un nombre (timestamp UNIX en secondes), le convertir en Date
       // Vérifier si c'est un timestamp en secondes (< 20000000000) ou en millisecondes
@@ -49,7 +49,7 @@ const convertTimestamps = (data: FirestoreData): Invoice => {
     }
   }
   
-  return result as Invoice;
+  return result as unknown as Invoice;
 };
 
 // Récupérer toutes les factures
