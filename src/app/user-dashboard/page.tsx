@@ -33,16 +33,29 @@ export default function ClientDashboard() {
 
   // Redirection si l'utilisateur n'est pas authentifié ou n'est pas client
   useEffect(() => {
-    if (!loading && !user) {
+    console.log("Dashboard utilisateur - Rôle:", user?.role);
+    // N'effectuer la redirection que si le chargement est terminé
+    if (loading) {
+      console.log("Chargement en cours, pas de redirection");
+      return;
+    }
+    
+    // Redirection vers login si non authentifié
+    if (!user) {
       console.log("Redirection vers login: utilisateur non authentifié");
       router.push("/login");
-    } else if (!loading && user && user.role !== "client" && user.role !== "admin") {
-      console.log(`Redirection vers admin: rôle incorrect (${user.role} au lieu de client ou admin)`);
-      // Rediriger uniquement si l'utilisateur n'est ni client ni admin
-      router.push("/admin");
-    } else if (!loading && user) {
-      console.log("Utilisateur authentifié correctement:", user);
+      return;
     }
+    
+    // Redirection vers admin si l'utilisateur est admin
+    if (user.role === "admin") {
+      console.log(`Redirection vers admin: rôle admin`);
+      router.push("/admin");
+      return;
+    }
+    
+    // Si l'utilisateur est client ou si le rôle est indéfini, on reste sur cette page
+    console.log("Utilisateur authentifié correctement:", user.role);
   }, [user, loading, router]);
 
   // Charger les factures et statistiques du client
@@ -222,7 +235,7 @@ export default function ClientDashboard() {
                 
                 {invoices.length > 5 && (
                   <div className="mt-4 text-center">
-                    <Button variant="outline" onClick={() => router.push('/client/invoices')}>
+                    <Button variant="outline" onClick={() => router.push('/user-dashboard/invoices')}>
                       Voir toutes mes factures
                     </Button>
                   </div>

@@ -18,11 +18,30 @@ export default function AdminDashboard() {
 
   // Redirection si l'utilisateur n'est pas authentifié ou n'est pas admin
   useEffect(() => {
-    if (!loading && !user) {
-      router.push("/login");
-    } else if (!loading && user && user.role !== "admin") {
-      router.push("/client");
+    console.log("Dashboard admin - Rôle:", user?.role);
+    // N'effectuer la redirection que si le chargement est terminé
+    if (loading) {
+      console.log("Chargement en cours, pas de redirection");
+      return;
     }
+    
+    // Redirection vers login si non authentifié
+    if (!user) {
+      console.log("Redirection vers login: utilisateur non authentifié");
+      router.push("/login");
+      return;
+    }
+    
+    // Redirection vers user-dashboard si l'utilisateur n'est pas admin
+    // Mais uniquement si le rôle est explicitement défini comme 'client'
+    if (user.role === "client") {
+      console.log(`Redirection vers user-dashboard: rôle client`);
+      router.push("/user-dashboard");
+      return;
+    }
+    
+    // Si l'utilisateur est admin ou si le rôle est indéfini, on reste sur cette page
+    console.log("Utilisateur authentifié correctement en tant que:", user.role);
   }, [user, loading, router]);
 
   if (loading || !user) {

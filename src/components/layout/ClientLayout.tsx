@@ -4,28 +4,108 @@ import React from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/context/AuthContext';
 import { signOut } from '@/lib/auth';
-import { Button } from '@/components/ui/button';
+import {
+  FileTextIcon,
+  HomeIcon,
+  UserIcon,
+  LogOutIcon,
+  SettingsIcon,
+  HelpCircleIcon,
+  LayoutDashboardIcon,
+} from "lucide-react";
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarInset,
+  SidebarProvider,
+  useSidebar,
+} from "@/components/ui/sidebar";
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Home, FileText, User, LogOut, Menu, Settings } from 'lucide-react';
-import Link from 'next/link';
+import { Button } from '@/components/ui/button';
+import { MenuIcon } from "lucide-react";
+import Image from 'next/image';
+import { useSettingsStore } from '@/lib/store/settingsStore';
 
 interface ClientLayoutProps {
   children: React.ReactNode;
 }
 
+// Items de navigation pour le client
+const navItems = [
+  {
+    title: "Tableau de bord",
+    url: "/user-dashboard",
+    icon: LayoutDashboardIcon,
+  },
+  {
+    title: "Mes factures",
+    url: "/user-dashboard/invoices",
+    icon: FileTextIcon,
+  },
+  {
+    title: "Mon profil",
+    url: "/user-dashboard/profile",
+    icon: UserIcon,
+  },
+];
+
+// Items secondaires
+const secondaryNavItems = [
+  {
+    title: "Paramètres",
+    url: "/user-dashboard/settings",
+    icon: SettingsIcon,
+  },
+  {
+    title: "Aide",
+    url: "/user-dashboard/help",
+    icon: HelpCircleIcon,
+  },
+];
+
+// Header pour le client
+function ClientHeader() {
+  const { setOpen } = useSidebar();
+
+  return (
+    <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background px-4 lg:px-6">
+      <Button
+        variant="outline"
+        size="icon"
+        className="lg:hidden"
+        onClick={() => setOpen(true)}
+      >
+        <MenuIcon className="h-5 w-5" />
+      </Button>
+      <div className="flex flex-1 items-center justify-between">
+        <div className="flex items-center gap-2">
+          <h1 className="text-xl font-semibold">Espace Client</h1>
+        </div>
+      </div>
+    </header>
+  );
+}
+
 export default function ClientLayout({ children }: ClientLayoutProps) {
   const { user, loading } = useAuth();
   const router = useRouter();
+  const { logo } = useSettingsStore();
 
-  // Rediriger vers la page de connexion si l'utilisateur n'est pas authentifiu00e9
+  // Rediriger vers la page de connexion si l'utilisateur n'est pas authentifié
   React.useEffect(() => {
     if (!loading && !user) {
+      console.log("Redirection vers login: utilisateur non authentifié");
       router.push('/login');
     } else if (!loading && user && user.role !== 'client') {
       // Rediriger vers le tableau de bord admin si l'utilisateur est un admin
+      console.log(`Redirection vers admin: rôle incorrect (${user?.role} au lieu de client)`);
       router.push('/admin');
+    } else if (!loading && user) {
+      console.log("Utilisateur client authentifié correctement:", user);
     }
   }, [user, loading, router]);
 
@@ -34,7 +114,7 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
       await signOut();
       router.push('/login');
     } catch (error) {
-      console.error('Erreur lors de la du00e9connexion:', error);
+      console.error('Erreur lors de la déconnexion:', error);
     }
   };
 
@@ -51,101 +131,83 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
   }
 
   return (
-    <div className="flex min-h-screen bg-background">
-      {/* Sidebar pour desktop */}
-      <aside className="hidden md:flex flex-col w-64 border-r bg-card">
-        <div className="p-6 border-b">
-          <h1 className="text-2xl font-bold">Espace Client</h1>
-        </div>
-        <nav className="flex-1 p-4 space-y-2">
-          <Link href="/client" className="flex items-center p-2 rounded-md hover:bg-accent">
-            <Home className="mr-2 h-5 w-5" />
-            <span>Tableau de bord</span>
-          </Link>
-          <Link href="/client/invoices" className="flex items-center p-2 rounded-md hover:bg-accent">
-            <FileText className="mr-2 h-5 w-5" />
-            <span>Mes factures</span>
-          </Link>
-          <Link href="/client/profile" className="flex items-center p-2 rounded-md hover:bg-accent">
-            <User className="mr-2 h-5 w-5" />
-            <span>Mon profil</span>
-          </Link>
-        </nav>
-        <div className="p-4 border-t">
-          <Button variant="outline" className="w-full justify-start" onClick={handleSignOut}>
-            <LogOut className="mr-2 h-5 w-5" />
-            <span>Du00e9connexion</span>
-          </Button>
-        </div>
-      </aside>
-
-      {/* Contenu principal */}
-      <div className="flex-1 flex flex-col">
-        {/* Header */}
-        <header className="h-16 border-b flex items-center justify-between px-6">
-          {/* Menu mobile */}
-          <Sheet>
-            <SheetTrigger asChild>
-              <Button variant="outline" size="icon" className="md:hidden">
-                <Menu className="h-5 w-5" />
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="left" className="w-64">
-              <div className="p-6 border-b">
-                <h1 className="text-2xl font-bold">Espace Client</h1>
+    <SidebarProvider>
+      <Sidebar variant="inset">
+        <SidebarHeader className="flex items-center justify-center py-4 px-6">
+          {logo ? (
+            <div className="relative w-[200px] h-[60px] -mt-4">
+              <Image 
+                src={logo} 
+                alt="Logo" 
+                fill 
+                className="object-contain" 
+                priority
+              />
+            </div>
+          ) : (
+            <>
+              <HomeIcon className="h-6 w-6" />
+              <span className="text-xl font-bold">Espace Client</span>
+            </>
+          )}
+        </SidebarHeader>
+        <SidebarContent className="flex flex-col gap-6">
+          <SidebarMenu>
+            {navItems.map((item) => (
+              <SidebarMenuButton
+                key={item.title}
+                onClick={() => router.push(item.url)}
+                className="flex items-center justify-start gap-2"
+              >
+                <item.icon className="h-5 w-5" />
+                <span>{item.title}</span>
+              </SidebarMenuButton>
+            ))}
+          </SidebarMenu>
+          <SidebarMenu className="mt-auto">
+            {secondaryNavItems.map((item) => (
+              <SidebarMenuButton
+                key={item.title}
+                onClick={() => router.push(item.url)}
+                className="flex items-center justify-start gap-2"
+              >
+                <item.icon className="h-5 w-5" />
+                <span>{item.title}</span>
+              </SidebarMenuButton>
+            ))}
+          </SidebarMenu>
+        </SidebarContent>
+        <SidebarFooter className="border-t p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Avatar className="h-8 w-8">
+                <AvatarImage src={user.photoURL || ''} alt={user.displayName || user.email || 'Client'} />
+                <AvatarFallback>{user.displayName?.[0] || user.email?.[0] || 'C'}</AvatarFallback>
+              </Avatar>
+              <div className="space-y-0.5">
+                <p className="text-sm font-medium">{user.displayName || user.email}</p>
+                <p className="text-xs text-muted-foreground">Client</p>
               </div>
-              <nav className="flex-1 p-4 space-y-2">
-                <Link href="/client" className="flex items-center p-2 rounded-md hover:bg-accent">
-                  <Home className="mr-2 h-5 w-5" />
-                  <span>Tableau de bord</span>
-                </Link>
-                <Link href="/client/invoices" className="flex items-center p-2 rounded-md hover:bg-accent">
-                  <FileText className="mr-2 h-5 w-5" />
-                  <span>Mes factures</span>
-                </Link>
-                <Link href="/client/profile" className="flex items-center p-2 rounded-md hover:bg-accent">
-                  <User className="mr-2 h-5 w-5" />
-                  <span>Mon profil</span>
-                </Link>
-              </nav>
-              <div className="p-4 border-t">
-                <Button variant="outline" className="w-full justify-start" onClick={handleSignOut}>
-                  <LogOut className="mr-2 h-5 w-5" />
-                  <span>Du00e9connexion</span>
-                </Button>
-              </div>
-            </SheetContent>
-          </Sheet>
-
-          {/* Profil utilisateur */}
-          <div className="ml-auto">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-                  <Avatar>
-                    <AvatarImage src={user.photoURL || ''} alt={user.displayName || 'Client'} />
-                    <AvatarFallback>{user.displayName?.charAt(0) || 'C'}</AvatarFallback>
-                  </Avatar>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuLabel>{user.displayName || user.email}</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                  <Link href="/client/profile">Mon profil</Link>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleSignOut}>Du00e9connexion</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            </div>
+            <Button variant="ghost" size="icon" onClick={handleSignOut}>
+              <LogOutIcon className="h-5 w-5" />
+            </Button>
           </div>
-        </header>
-
-        {/* Contenu de la page */}
-        <main className="flex-1 p-6 overflow-auto">
-          {children}
-        </main>
-      </div>
-    </div>
+        </SidebarFooter>
+      </Sidebar>
+      
+      <SidebarInset>
+        <ClientHeader />
+        <div className="flex flex-1 flex-col">
+          <div className="@container/main flex flex-1 flex-col gap-2">
+            <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
+              <div className="px-4 lg:px-6">
+                {children}
+              </div>
+            </div>
+          </div>
+        </div>
+      </SidebarInset>
+    </SidebarProvider>
   );
 }

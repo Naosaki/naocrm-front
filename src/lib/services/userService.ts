@@ -1,24 +1,21 @@
+import { db } from "@/lib/firebase";
 import {
   collection,
   doc,
   getDoc,
   getDocs,
-  setDoc,
-  updateDoc,
-  deleteDoc,
   query,
   where,
-  serverTimestamp,
+  updateDoc,
   Timestamp,
-} from 'firebase/firestore';
-import { db } from '../firebase';
-import { User } from '@/types';
-import { signUp } from '../auth';
+} from "firebase/firestore";
+import { User } from "@/types";
+import { signUp } from "@/lib/auth";
 
 const COLLECTION = 'users';
 
 // Convertir les timestamps Firestore en dates JavaScript
-const convertTimestamps = (data: any): User => {
+const convertTimestamps = (data: Record<string, any>): User => {
   const result = { ...data };
   if (result.createdAt && result.createdAt instanceof Timestamp) {
     result.createdAt = result.createdAt.toDate();
@@ -53,11 +50,19 @@ export const getUserById = async (id: string): Promise<User | null> => {
     const docSnap = await getDoc(docRef);
 
     if (docSnap.exists()) {
-      return convertTimestamps({
+      const userData = docSnap.data();
+      console.log(`Données brutes de l'utilisateur ${id}:`, userData);
+      console.log(`Rôle de l'utilisateur: ${userData.role}`);
+      
+      const convertedUser = convertTimestamps({
         id: docSnap.id,
-        ...docSnap.data(),
+        ...userData,
       });
+      
+      console.log(`Utilisateur converti:`, convertedUser);
+      return convertedUser;
     }
+    console.warn(`Aucun utilisateur trouvé avec l'ID ${id}`);
     return null;
   } catch (error) {
     console.error(`Erreur lors de la récupération de l'utilisateur ${id}:`, error);
@@ -81,6 +86,83 @@ export const getUserByEmail = async (email: string): Promise<User | null> => {
     return null;
   } catch (error) {
     console.error(`Erreur lors de la récupération de l'utilisateur avec l'email ${email}:`, error);
+    throw error;
+  }
+};
+
+// Récupérer un utilisateur par son thirdPartyId
+export const getUserByThirdPartyId = async (thirdPartyId: string): Promise<User | null> => {
+  try {
+    const q = query(collection(db, COLLECTION), where('thirdPartyId', '==', thirdPartyId));
+    const querySnapshot = await getDocs(q);
+
+    if (!querySnapshot.empty) {
+      const doc = querySnapshot.docs[0];
+      return convertTimestamps({
+        id: doc.id,
+        ...doc.data(),
+      });
+    }
+    return null;
+  } catch (error) {
+    console.error(`Erreur lors de la récupération de l'utilisateur avec le thirdPartyId ${thirdPartyId}:`, error);
+    throw error;
+  }
+};
+
+// Récupérer un utilisateur par le code client (code_client)
+export const getUserByClientCode = async (clientCode: string): Promise<User | null> => {
+  try {
+    // D'abord, trouver le thirdParty avec ce code client
+    const thirdPartiesCollection = collection(db, 'thirdparties');
+    const q = query(thirdPartiesCollection, where('code_client', '==', clientCode));
+    const querySnapshot = await getDocs(q);
+
+    if (querySnapshot.empty) {
+      return null; // Aucun client trouvé avec ce code
+    }
+
+    const thirdParty = querySnapshot.docs[0];
+    const thirdPartyId = thirdParty.id;
+
+    // Ensuite, trouver l'utilisateur associé à ce thirdPartyId
+    return await getUserByThirdPartyId(thirdPartyId);
+  } catch (error) {
+    console.error(`Erreur lors de la récupération de l'utilisateur avec le code client ${clientCode}:`, error);
+    throw error;
+  }
+};
+
+// Vérifier si un code client existe
+export const checkClientCodeExists = async (clientCode: string): Promise<{exists: boolean, thirdPartyId?: string, thirdPartyName?: string}> => {
+  try {
+    const thirdPartiesCollection = collection(db, 'thirdparties');
+    const q = query(thirdPartiesCollection, where('code_client', '==', clientCode));
+    const querySnapshot = await getDocs(q);
+
+    if (querySnapshot.empty) {
+      return { exists: false };
+    }
+
+    const thirdParty = querySnapshot.docs[0];
+    return { 
+      exists: true, 
+      thirdPartyId: thirdParty.id, 
+      thirdPartyName: thirdParty.data().name 
+    };
+  } catch (error) {
+    console.error(`Erreur lors de la vérification du code client ${clientCode}:`, error);
+    throw error;
+  }
+};
+
+// Vérifier si un client a déjà un compte utilisateur
+export const checkClientHasUser = async (clientCode: string): Promise<boolean> => {
+  try {
+    const user = await getUserByClientCode(clientCode);
+    return user !== null;
+  } catch (error) {
+    console.error(`Erreur lors de la vérification si le client ${clientCode} a un utilisateur:`, error);
     throw error;
   }
 };
@@ -150,15 +232,20 @@ export const updateUser = async (id: string, userData: Partial<Omit<User, 'id' |
   }
 };
 
-// Supprimer un utilisateur
-export const deleteUser = async (id: string): Promise<boolean> => {
+// Supprimer un utilisateur (Firestore + Firebase Auth)
+export const deleteUser = async (userId: string): Promise<void> => {
   try {
-    await deleteDoc(doc(db, COLLECTION, id));
-    // Note: Cette fonction ne supprime pas l'utilisateur dans Firebase Auth
-    // Pour une suppression complète, il faudrait utiliser les fonctions d'administration Firebase
-    return true;
+    // Appeler l'API route pour supprimer l'utilisateur dans Firebase Auth et Firestore
+    const response = await fetch(`/api/users/delete?userId=${userId}`, {
+      method: 'DELETE',
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Erreur lors de la suppression de l\'utilisateur');
+    }
   } catch (error) {
-    console.error(`Erreur lors de la suppression de l'utilisateur ${id}:`, error);
+    console.error(`Erreur lors de la suppression de l'utilisateur ${userId}:`, error);
     throw error;
   }
 };

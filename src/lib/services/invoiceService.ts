@@ -244,7 +244,7 @@ export const getAllInvoicesWithClientInfo = async (): Promise<Invoice[]> => {
     const invoices = await getAllInvoices();
     
     // Récupérer tous les clients pour faire la correspondance
-    const thirdPartiesCollection = collection(db, 'thirdParties');
+    const thirdPartiesCollection = collection(db, 'thirdparties');
     const thirdPartiesSnapshot = await getDocs(thirdPartiesCollection);
     const thirdParties = thirdPartiesSnapshot.docs.map(doc => ({
       id: doc.id,
@@ -383,5 +383,196 @@ export const getRevenueChartData = async (): Promise<{ date: string; revenus: nu
   } catch (error) {
     console.error('Erreur lors de la récupération des données pour le graphique:', error);
     return [];
+  }
+};
+
+// Récupérer le nombre de factures et le montant total pour un client spécifique
+export const getClientInvoiceStats = async (clientCode: string): Promise<{ invoiceCount: number; totalAmount: number }> => {
+  try {
+    const allInvoices = await getAllInvoices();
+    
+    // Filtrer les factures du client
+    const clientInvoices = allInvoices.filter(invoice => invoice.ref_client === clientCode);
+    
+    // Calculer le nombre de factures
+    const invoiceCount = clientInvoices.length;
+    
+    // Calculer le montant total des transactions (utiliser le montant HT)
+    const totalAmount = clientInvoices.reduce((total, invoice) => {
+      // Utiliser le montant HT (subtotal) ou le montant multicurrency si disponible
+      const amount = invoice.multicurrency_total_ht || invoice.subtotal || 0;
+      // S'assurer que le montant est un nombre valide
+      return total + (isNaN(Number(amount)) ? 0 : Number(amount));
+    }, 0);
+    
+    return { invoiceCount, totalAmount };
+  } catch (error) {
+    console.error(`Erreur lors du calcul des statistiques pour le client ${clientCode}:`, error);
+    // Retourner des valeurs par défaut en cas d'erreur
+    return { invoiceCount: 0, totalAmount: 0 };
+  }
+};
+
+// Récupérer le nombre de factures et le montant total pour tous les clients
+export const getAllClientsInvoiceStats = async (): Promise<Record<string, { invoiceCount: number; totalAmount: number }>> => {
+  try {
+    const allInvoices = await getAllInvoices();
+    
+    // Créer un objet pour stocker les statistiques par code client
+    const clientStats: Record<string, { invoiceCount: number; totalAmount: number }> = {};
+    
+    // Parcourir toutes les factures et agréger les statistiques par client
+    allInvoices.forEach(invoice => {
+      const clientCode = invoice.ref_client;
+      
+      // Ignorer les factures sans code client
+      if (!clientCode) return;
+      
+      // Initialiser les statistiques du client si nécessaire
+      if (!clientStats[clientCode]) {
+        clientStats[clientCode] = { invoiceCount: 0, totalAmount: 0 };
+      }
+      
+      // Incrémentation du nombre de factures
+      clientStats[clientCode].invoiceCount += 1;
+      
+      // Ajouter le montant de la facture au total (utiliser le montant HT)
+      const amount = invoice.multicurrency_total_ht || invoice.subtotal || 0;
+      // S'assurer que le montant est un nombre valide
+      clientStats[clientCode].totalAmount += isNaN(Number(amount)) ? 0 : Number(amount);
+    });
+    
+    return clientStats;
+  } catch (error) {
+    console.error('Erreur lors du calcul des statistiques pour tous les clients:', error);
+    return {};
+  }
+};
+
+// Récupérer les factures d'un client connecté (via son thirdPartyId)
+export const getInvoicesByConnectedClient = async (userId: string): Promise<Invoice[]> => {
+  try {
+    // Récupérer l'utilisateur pour obtenir son thirdPartyId
+    const userDoc = await getDoc(doc(db, 'users', userId));
+    if (!userDoc.exists()) {
+      throw new Error('Utilisateur non trouvé');
+    }
+    
+    const userData = userDoc.data();
+    
+    // Vérifier le rôle de l'utilisateur
+    if (userData.role === 'admin') {
+      // Pour les administrateurs, retourner un tableau vide
+      // ou éventuellement toutes les factures si nécessaire
+      return [];
+    }
+    
+    const thirdPartyId = userData.thirdPartyId;
+    
+    if (!thirdPartyId) {
+      throw new Error('Aucun client associé à cet utilisateur');
+    }
+    
+    // Récupérer le client pour obtenir son code_client
+    const thirdPartyDoc = await getDoc(doc(db, 'thirdparties', thirdPartyId));
+    if (!thirdPartyDoc.exists()) {
+      throw new Error('Client non trouvé');
+    }
+    
+    const thirdPartyData = thirdPartyDoc.data();
+    const clientCode = thirdPartyData.code_client;
+    
+    if (!clientCode) {
+      throw new Error('Code client non trouvé');
+    }
+    
+    // Récupérer les factures correspondant au code client
+    const q = query(
+      collection(db, 'invoices'),
+      where('ref_client', '==', clientCode)
+    );
+    
+    const querySnapshot = await getDocs(q);
+    const invoices: Invoice[] = [];
+    
+    querySnapshot.forEach((doc) => {
+      const data = doc.data();
+      invoices.push({
+        id: doc.id,
+        ...data,
+        thirdPartyId: thirdPartyId,
+        thirdPartyName: thirdPartyData.name || '',
+      } as Invoice);
+    });
+    
+    // Trier les factures par date (les plus récentes d'abord)
+    invoices.sort((a, b) => {
+      const dateA = a.date instanceof Date ? a.date.getTime() : new Date(a.date || 0).getTime();
+      const dateB = b.date instanceof Date ? b.date.getTime() : new Date(b.date || 0).getTime();
+      return dateB - dateA;
+    });
+    
+    return invoices;
+  } catch (error) {
+    console.error('Erreur lors de la récupération des factures du client connecté:', error);
+    throw error;
+  }
+};
+
+// Récupérer les statistiques des factures d'un client connecté
+export const getConnectedClientInvoiceStats = async (userId: string): Promise<{
+  totalInvoices: number;
+  paidInvoices: number;
+  pendingInvoices: number;
+  overdueInvoices: number;
+  totalAmount: number;
+  paidAmount: number;
+  pendingAmount: number;
+}> => {
+  try {
+    const invoices = await getInvoicesByConnectedClient(userId);
+    
+    // Initialiser les statistiques
+    const stats = {
+      totalInvoices: invoices.length,
+      paidInvoices: 0,
+      pendingInvoices: 0,
+      overdueInvoices: 0,
+      totalAmount: 0,
+      paidAmount: 0,
+      pendingAmount: 0,
+    };
+    
+    // Calculer les statistiques
+    invoices.forEach((invoice) => {
+      // Ajouter au montant total
+      const amount = Number(invoice.multicurrency_total_ht || invoice.subtotal || 0);
+      if (!isNaN(amount)) {
+        stats.totalAmount += amount;
+      }
+      
+      // Compter par statut
+      if (invoice.status === 'paid') {
+        stats.paidInvoices++;
+        if (!isNaN(amount)) {
+          stats.paidAmount += amount;
+        }
+      } else if (invoice.status === 'overdue') {
+        stats.overdueInvoices++;
+        if (!isNaN(amount)) {
+          stats.pendingAmount += amount;
+        }
+      } else if (invoice.status === 'sent' || invoice.status === 'draft') {
+        stats.pendingInvoices++;
+        if (!isNaN(amount)) {
+          stats.pendingAmount += amount;
+        }
+      }
+    });
+    
+    return stats;
+  } catch (error) {
+    console.error('Erreur lors de la récupération des statistiques du client connecté:', error);
+    throw error;
   }
 };

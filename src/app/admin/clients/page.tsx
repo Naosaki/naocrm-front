@@ -6,49 +6,116 @@ import { useAuth } from "@/lib/context/AuthContext";
 import { AppSidebar } from "@/components/dashboard/app-sidebar";
 import { SiteHeader } from "@/components/dashboard/site-header";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
-import { getAllThirdParties } from "@/lib/services/thirdPartyService";
+import { getAllClients } from "@/lib/services/thirdPartyService";
+import { getAllClientsInvoiceStats } from "@/lib/services/invoiceService";
 import { ThirdParty } from "@/types";
 import { Button } from "@/components/ui/button";
-import { PlusCircle } from "lucide-react";
+import { PlusCircle, Eye } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { formatPhoneNumber } from "@/lib/utils/phone-utils";
+import { formatAmount } from "@/lib/utils/format-utils";
+import { Badge } from "@/components/ui/badge";
+import { ClientDetailsModal } from "@/components/dashboard/client-details-modal";
+import { DataTablePagination } from "@/components/ui/data-table-pagination";
+
+// Type pour les statistiques des clients
+type ClientStats = {
+  [clientCode: string]: { invoiceCount: number; totalAmount: number };
+};
 
 export default function ClientsPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
   const [clients, setClients] = useState<ThirdParty[]>([]);
+  const [clientStats, setClientStats] = useState<ClientStats>({});
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  
+  // États pour la pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   // Redirection si l'utilisateur n'est pas authentifié ou n'est pas admin
   useEffect(() => {
-    if (!loading && !user) {
-      router.push("/login");
-    } else if (!loading && user && user.role !== "admin") {
-      router.push("/client");
+    // N'effectuer la redirection que si le chargement est terminé
+    if (loading) {
+      return;
     }
+    
+    // Redirection vers login si non authentifié
+    if (!user) {
+      router.push("/login");
+      return;
+    }
+    
+    // Redirection vers user-dashboard si l'utilisateur est explicitement client
+    if (user.role === "client") {
+      router.push("/user-dashboard");
+      return;
+    }
+    
+    // Si l'utilisateur est admin ou si le rôle est indéfini, on reste sur cette page
   }, [user, loading, router]);
 
-  // Charger les clients depuis Firestore
+  // Charger les clients et leurs statistiques depuis Firestore
   useEffect(() => {
-    const fetchClients = async () => {
+    const fetchData = async () => {
       try {
         setIsLoading(true);
-        const clientsData = await getAllThirdParties();
+        
+        // Récupérer les clients et leurs statistiques en parallèle
+        const [clientsData, statsData] = await Promise.all([
+          getAllClients(),
+          getAllClientsInvoiceStats()
+        ]);
+        
         setClients(clientsData);
+        setClientStats(statsData);
         setError(null);
       } catch (err) {
-        console.error("Erreur lors du chargement des clients:", err);
-        setError("Impossible de charger les clients. Veuillez réessayer plus tard.");
+        console.error("Erreur lors du chargement des données:", err);
+        setError("Impossible de charger les données. Veuillez réessayer plus tard.");
       } finally {
         setIsLoading(false);
       }
     };
 
     if (!loading && user) {
-      fetchClients();
+      fetchData();
     }
   }, [loading, user]);
+
+  // Ouvrir la modal avec les détails du client
+  const handleViewClient = (clientId: string) => {
+    setSelectedClientId(clientId);
+    setIsModalOpen(true);
+  };
+
+  // Fermer la modal
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setSelectedClientId(null);
+  };
+  
+  // Changer de page
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+  
+  // Changer le nombre d'éléments par page
+  const handlePageSizeChange = (size: number) => {
+    setPageSize(size);
+    setCurrentPage(1); // Revenir à la première page lors du changement de taille
+  };
+  
+  // Calculer les clients à afficher pour la page actuelle
+  const paginatedClients = clients.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  );
 
   if (loading || !user) {
     return (
@@ -94,38 +161,62 @@ export default function ClientsPage() {
                         Aucun client trouvé. Ajoutez votre premier client en cliquant sur le bouton ci-dessus.
                       </div>
                     ) : (
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>Nom</TableHead>
-                            <TableHead>Code Client</TableHead>
-                            <TableHead>Email</TableHead>
-                            <TableHead>Téléphone</TableHead>
-                            <TableHead>Adresse</TableHead>
-                            <TableHead>Contact</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {clients.map((client) => (
-                            <TableRow key={client.id} className="cursor-pointer hover:bg-muted/50" onClick={() => router.push(`/admin/clients/${client.id}`)}>
-                              <TableCell className="font-medium">{client.name}</TableCell>
-                              <TableCell className="font-medium text-primary">{client.code_client || "-"}</TableCell>
-                              <TableCell>{client.email}</TableCell>
-                              <TableCell>{client.phone || "-"}</TableCell>
-                              <TableCell>
-                                {client.address ? (
-                                  <>
-                                    {client.address}, {client.postalCode} {client.city}, {client.country}
-                                  </>
-                                ) : (
-                                  "-"
-                                )}
-                              </TableCell>
-                              <TableCell>{client.contactPerson || "-"}</TableCell>
+                      <>
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Nom</TableHead>
+                              <TableHead>Code Client</TableHead>
+                              <TableHead>Email</TableHead>
+                              <TableHead>Téléphone</TableHead>
+                              <TableHead className="text-center">Factures</TableHead>
+                              <TableHead className="text-right">Montant total HT</TableHead>
+                              <TableHead className="text-center">Actions</TableHead>
                             </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
+                          </TableHeader>
+                          <TableBody>
+                            {paginatedClients.map((client) => {
+                              // Récupérer les statistiques du client
+                              const stats = clientStats[client.code_client || ''] || { invoiceCount: 0, totalAmount: 0 };
+                              
+                              return (
+                                <TableRow key={client.id}>
+                                  <TableCell className="font-medium">{client.name}</TableCell>
+                                  <TableCell className="font-medium text-primary">{client.code_client || "-"}</TableCell>
+                                  <TableCell>{client.email}</TableCell>
+                                  <TableCell>{formatPhoneNumber(client.phone)}</TableCell>
+                                  <TableCell className="text-center">
+                                    <Badge variant="outline" className="bg-blue-50 text-blue-700 hover:bg-blue-100">
+                                      {stats.invoiceCount}
+                                    </Badge>
+                                  </TableCell>
+                                  <TableCell className="text-right font-medium">
+                                    {formatAmount(stats.totalAmount)}
+                                  </TableCell>
+                                  <TableCell className="text-center">
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      onClick={() => handleViewClient(client.id)}
+                                    >
+                                      <Eye className="h-4 w-4" />
+                                    </Button>
+                                  </TableCell>
+                                </TableRow>
+                              );
+                            })}
+                          </TableBody>
+                        </Table>
+                        
+                        {/* Composant de pagination */}
+                        <DataTablePagination
+                          totalItems={clients.length}
+                          pageSize={pageSize}
+                          currentPage={currentPage}
+                          onPageChange={handlePageChange}
+                          onPageSizeChange={handlePageSizeChange}
+                        />
+                      </>
                     )}
                   </CardContent>
                 </Card>
@@ -134,6 +225,13 @@ export default function ClientsPage() {
           </div>
         </div>
       </SidebarInset>
+      
+      {/* Modal pour afficher les détails du client */}
+      <ClientDetailsModal
+        clientId={selectedClientId}
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+      />
     </SidebarProvider>
   );
 }

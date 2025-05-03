@@ -6,20 +6,17 @@ import {
   addDoc,
   updateDoc,
   deleteDoc,
-  query,
-  where,
-  orderBy,
-  limit,
   serverTimestamp,
   Timestamp,
 } from 'firebase/firestore';
 import { db } from '../firebase';
 import { ThirdParty } from '@/types';
+import { getAllInvoices } from './invoiceService';
 
-const COLLECTION = 'thirdParties';
+const COLLECTION = 'thirdparties';
 
 // Convertir les timestamps Firestore en dates JavaScript
-const convertTimestamps = (data: any): ThirdParty => {
+const convertTimestamps = (data: Record<string, any>): ThirdParty => {
   const result = { ...data };
   if (result.createdAt && result.createdAt instanceof Timestamp) {
     result.createdAt = result.createdAt.toDate();
@@ -139,5 +136,66 @@ export const searchThirdPartiesByName = async (name: string): Promise<ThirdParty
   } catch (error) {
     console.error('Erreur lors de la recherche de clients:', error);
     throw error;
+  }
+};
+
+// Récupérer tous les clients (entreprises avec au moins une facture)
+export const getAllClients = async (): Promise<ThirdParty[]> => {
+  try {
+    // Récupérer toutes les entreprises
+    const allThirdParties = await getAllThirdParties();
+    
+    // Récupérer toutes les factures
+    const invoices = await getAllInvoices();
+    
+    // Extraire les codes clients uniques des factures
+    const clientCodes = new Set(invoices.map(invoice => invoice.ref_client).filter(Boolean));
+    
+    // Filtrer les entreprises qui ont au moins une facture
+    return allThirdParties.filter(thirdParty => 
+      clientCodes.has(thirdParty.code_client)
+    );
+  } catch (error) {
+    console.error('Erreur lors de la récupération des clients:', error);
+    throw error;
+  }
+};
+
+// Récupérer tous les prospects (entreprises sans facture)
+export const getAllProspects = async (): Promise<ThirdParty[]> => {
+  try {
+    // Récupérer toutes les entreprises
+    const allThirdParties = await getAllThirdParties();
+    
+    // Récupérer toutes les factures
+    const invoices = await getAllInvoices();
+    
+    // Extraire les codes clients uniques des factures
+    const clientCodes = new Set(invoices.map(invoice => invoice.ref_client).filter(Boolean));
+    
+    // Filtrer les entreprises qui n'ont pas de facture
+    return allThirdParties.filter(thirdParty => 
+      !clientCodes.has(thirdParty.code_client)
+    );
+  } catch (error) {
+    console.error('Erreur lors de la récupération des prospects:', error);
+    throw error;
+  }
+};
+
+// Récupérer le code client à partir de l'ID du client
+export const getClientCodeById = async (thirdPartyId: string): Promise<string | null> => {
+  try {
+    const docRef = doc(db, 'thirdparties', thirdPartyId);
+    const docSnap = await getDoc(docRef);
+
+    if (docSnap.exists()) {
+      const data = docSnap.data();
+      return data.code_client || null;
+    }
+    return null;
+  } catch (error) {
+    console.error(`Erreur lors de la récupération du code client pour ${thirdPartyId}:`, error);
+    return null;
   }
 };

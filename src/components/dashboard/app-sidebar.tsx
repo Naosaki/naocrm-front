@@ -12,6 +12,8 @@ import {
   LogOutIcon,
   SettingsIcon,
   HelpCircleIcon,
+  UserPlusIcon,
+  UserCogIcon,
 } from "lucide-react"
 import { useAuth } from "@/lib/context/AuthContext"
 import { useSettingsStore } from "@/lib/store/settingsStore"
@@ -39,6 +41,11 @@ const navItems = [
     icon: UsersIcon,
   },
   {
+    title: "Prospects",
+    url: "/admin/prospects",
+    icon: UserPlusIcon,
+  },
+  {
     title: "Factures",
     url: "/admin/invoices",
     icon: FileTextIcon,
@@ -47,6 +54,11 @@ const navItems = [
     title: "Produits",
     url: "/admin/products",
     icon: PackageIcon,
+  },
+  {
+    title: "Utilisateurs",
+    url: "/admin/users",
+    icon: UserCogIcon,
   },
 ]
 
@@ -83,20 +95,21 @@ export function AppSidebar({ className, ...props }: React.ComponentProps<typeof 
 
   return (
     <Sidebar className={className} {...props}>
-      <SidebarHeader className="flex items-center gap-2 px-6">
+      <SidebarHeader className="flex items-center justify-center py-4 px-6">
         {logo ? (
-          <div className="relative h-6 w-6">
+          <div className="relative w-[200px] h-[60px] -mt-4">
             <Image 
               src={logo} 
               alt="Logo" 
               fill 
               className="object-contain" 
+              priority
             />
           </div>
         ) : (
-          <HomeIcon className="h-6 w-6" />
+          <HomeIcon className="h-10 w-10" />
         )}
-        <span className="text-xl font-bold">CRM Portal</span>
+        {/* Suppression du texte "CRM Portal" */}
       </SidebarHeader>
       <SidebarContent className="flex flex-col gap-6">
         <SidebarMenu>

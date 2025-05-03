@@ -8,6 +8,7 @@ import { ThirdParty } from "@/types"
 import { getAllThirdParties } from "@/lib/services/thirdPartyService"
 import { Button } from "@/components/ui/button"
 import { ExternalLink } from "lucide-react"
+import { formatPhoneNumber } from "@/lib/utils/phone-utils"
 
 export function ClientsTable() {
   const [clients, setClients] = useState<ThirdParty[]>([])
@@ -86,7 +87,7 @@ export function ClientsTable() {
                   <TableCell className="font-medium">{client.name}</TableCell>
                   <TableCell className="font-medium text-primary">{client.code_client || "-"}</TableCell>
                   <TableCell>{client.email}</TableCell>
-                  <TableCell>{client.phone || "-"}</TableCell>
+                  <TableCell>{formatPhoneNumber(client.phone) || "-"}</TableCell>
                 </TableRow>
               ))}
             </TableBody>

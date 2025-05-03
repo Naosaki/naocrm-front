@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { signIn } from "@/lib/auth";
 import { useAuth } from "@/lib/context/AuthContext";
+import { useSettingsStore } from "@/lib/store/settingsStore";
 import { Loader2 } from "lucide-react";
 
 export function LoginForm({
@@ -23,15 +24,17 @@ export function LoginForm({
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
   const { user, loading } = useAuth();
+  const { loginImage } = useSettingsStore()
 
   // Rediriger si l'utilisateur est déjà connecté
   useEffect(() => {
+    console.log("Login form - État utilisateur:", { loading, role: user?.role });
     if (!loading && user) {
-      if (user.role === 'admin') {
-        router.push('/admin');
-      } else {
-        router.push('/client');
-      }
+      console.log("Utilisateur déjà connecté - Rôle:", user.role);
+      // Utiliser une variable pour éviter les redirections multiples
+      const redirectPath = user.role === 'admin' ? '/admin' : '/user-dashboard';
+      console.log(`Redirection vers ${redirectPath}`);
+      router.push(redirectPath);
     }
   }, [user, loading, router]);
 
@@ -42,13 +45,13 @@ export function LoginForm({
 
     try {
       const userData = await signIn(email, password);
-      // Redirection manuelle vers le bon dashboard en fonction du rôle
+      console.log("Résultat de connexion:", userData);
       if (userData && 'role' in userData) {
-        if (userData.role === 'admin') {
-          router.push('/admin');
-        } else {
-          router.push('/client');
-        }
+        console.log("Rôle détecté après connexion:", userData.role);
+        // Utiliser une variable pour éviter les redirections multiples
+        const redirectPath = userData.role === 'admin' ? '/admin' : '/user-dashboard';
+        console.log(`Redirection vers ${redirectPath}`);
+        router.push(redirectPath);
       }
       // Si pas de rôle, la redirection sera gérée par le useEffect ci-dessus
     } catch (err: unknown) {
@@ -124,10 +127,10 @@ export function LoginForm({
           <div className="bg-muted relative hidden md:block">
             <div className="absolute inset-0 h-full w-full">
               <Image
-                src="/next.svg"
+                src={loginImage || "/next.svg"}
                 alt="CRM Portal"
                 fill
-                className="object-contain p-8 dark:brightness-[0.8]"
+                className="object-cover dark:brightness-[0.8]"
                 priority
               />
             </div>

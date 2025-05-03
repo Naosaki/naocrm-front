@@ -10,6 +10,8 @@ import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Home, Users, FileText, Package, BarChart2, LogOut, Menu, Settings } from 'lucide-react';
 import Link from 'next/link';
+import Image from 'next/image';
+import { useSettingsStore } from '@/lib/store/settingsStore';
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -18,6 +20,7 @@ interface AdminLayoutProps {
 export default function AdminLayout({ children }: AdminLayoutProps) {
   const { user, loading } = useAuth();
   const router = useRouter();
+  const { logo } = useSettingsStore();
 
   // Rediriger vers la page de connexion si l'utilisateur n'est pas authentifié
   React.useEffect(() => {
@@ -25,7 +28,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       router.push('/login');
     } else if (!loading && user && user.role !== 'admin') {
       // Rediriger vers le tableau de bord client si l'utilisateur n'est pas un admin
-      router.push('/client');
+      router.push('/user-dashboard');
     }
   }, [user, loading, router]);
 
@@ -54,8 +57,20 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     <div className="flex min-h-screen bg-background">
       {/* Sidebar pour desktop */}
       <aside className="hidden md:flex flex-col w-64 border-r bg-card">
-        <div className="p-6 border-b">
-          <h1 className="text-2xl font-bold">CRM Admin</h1>
+        <div className="p-6 border-b flex flex-col items-center">
+          {logo ? (
+            <div className="relative w-[200px] h-[60px] -mt-4 mb-2">
+              <Image 
+                src={logo} 
+                alt="Logo" 
+                fill
+                className="object-contain"
+                priority
+              />
+            </div>
+          ) : (
+            <h1 className="text-2xl font-bold">CRM Admin</h1>
+          )}
         </div>
         <nav className="flex-1 p-4 space-y-2">
           <Link href="/admin" className="flex items-center p-2 rounded-md hover:bg-accent">
@@ -103,8 +118,20 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
               </Button>
             </SheetTrigger>
             <SheetContent side="left" className="w-64">
-              <div className="p-6 border-b">
-                <h1 className="text-2xl font-bold">CRM Admin</h1>
+              <div className="p-6 border-b flex flex-col items-center">
+                {logo ? (
+                  <div className="relative w-[200px] h-[60px] -mt-4 mb-2">
+                    <Image 
+                      src={logo} 
+                      alt="Logo" 
+                      fill
+                      className="object-contain"
+                      priority
+                    />
+                  </div>
+                ) : (
+                  <h1 className="text-2xl font-bold">CRM Admin</h1>
+                )}
               </div>
               <nav className="flex-1 p-4 space-y-2">
                 <Link href="/admin" className="flex items-center p-2 rounded-md hover:bg-accent">

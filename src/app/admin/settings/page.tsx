@@ -20,19 +20,35 @@ import { Loader2 } from "lucide-react"
 export default function SettingsPage() {
   const { user, loading } = useAuth()
   const router = useRouter()
-  const { logo, setLogo } = useSettingsStore()
+  const { logo, setLogo, loginImage, setLoginImage } = useSettingsStore()
   const [logoUrl, setLogoUrl] = useState<string>(logo || "")
   const [previewLogo, setPreviewLogo] = useState<string | null>(logo)
+  const [loginImageUrl, setLoginImageUrl] = useState<string>(loginImage || "")
+  const [previewLoginImage, setPreviewLoginImage] = useState<string | null>(loginImage)
   const [isUploading, setIsUploading] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const loginImageInputRef = useRef<HTMLInputElement>(null)
 
   // Redirection si l'utilisateur n'est pas authentifié ou n'est pas admin
   useEffect(() => {
-    if (!loading && !user) {
-      router.push("/login")
-    } else if (!loading && user && user.role !== "admin") {
-      router.push("/client")
+    // N'effectuer la redirection que si le chargement est terminé
+    if (loading) {
+      return;
     }
+    
+    // Redirection vers login si non authentifié
+    if (!user) {
+      router.push("/login");
+      return;
+    }
+    
+    // Redirection vers user-dashboard si l'utilisateur est explicitement client
+    if (user.role === "client") {
+      router.push("/user-dashboard");
+      return;
+    }
+    
+    // Si l'utilisateur est admin ou si le rôle est indéfini, on reste sur cette page
   }, [user, loading, router])
 
   const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -63,6 +79,7 @@ export default function SettingsPage() {
 
   const handleSave = () => {
     setLogo(logoUrl || null)
+    setLoginImage(loginImageUrl || null)
     toast.success("Paramètres enregistrés avec succès")
   }
 
@@ -70,11 +87,18 @@ export default function SettingsPage() {
     setLogo(null)
     setLogoUrl("")
     setPreviewLogo(null)
-    toast.info("Logo réinitialisé")
+    setLoginImage(null)
+    setLoginImageUrl("")
+    setPreviewLoginImage(null)
+    toast.info("Logo et image de connexion réinitialisés")
   }
 
   const triggerFileInput = () => {
     fileInputRef.current?.click()
+  }
+
+  const triggerLoginImageInput = () => {
+    loginImageInputRef.current?.click()
   }
 
   if (loading || !user) {
@@ -103,14 +127,14 @@ export default function SettingsPage() {
                     <CardHeader className="text-center">
                       <CardTitle>Personnalisation</CardTitle>
                       <CardDescription>
-                        Personnalisez l&apos;apparence de votre portail CRM
+                        Personnalisez l'apparence de votre portail CRM
                       </CardDescription>
                     </CardHeader>
                     <CardContent>
-                      <Tabs defaultValue="upload" className="w-full">
+                      <Tabs defaultValue="upload">
                         <TabsList className="grid w-full grid-cols-2 mb-6">
                           <TabsTrigger value="upload">Télécharger un logo</TabsTrigger>
-                          <TabsTrigger value="url">URL externe</TabsTrigger>
+                          <TabsTrigger value="url">URL du logo</TabsTrigger>
                         </TabsList>
                         
                         <TabsContent value="upload" className="space-y-4">
@@ -157,7 +181,7 @@ export default function SettingsPage() {
                               onChange={handleLogoChange}
                             />
                             <p className="text-sm text-muted-foreground">
-                              Entrez l&apos;URL d&apos;une image pour l&apos;utiliser comme logo
+                              Entrez l'URL d'une image pour l'utiliser comme logo
                             </p>
                           </div>
                         </TabsContent>
@@ -166,8 +190,8 @@ export default function SettingsPage() {
                           <div className="mt-6 space-y-2">
                             <Label>Aperçu</Label>
                             <div className="flex items-center justify-center gap-4 p-4 rounded-md border">
-                              <div className="flex items-center gap-2">
-                                <div className="relative h-10 w-10">
+                              <div className="flex items-center justify-center">
+                                <div className="relative w-[200px] h-[60px]">
                                   <Image
                                     src={previewLogo}
                                     alt="Logo preview"
@@ -179,17 +203,116 @@ export default function SettingsPage() {
                                     }}
                                   />
                                 </div>
-                                <span className="text-xl font-bold">CRM Portal</span>
                               </div>
                             </div>
                           </div>
                         )}
-                        
-                        <div className="flex justify-center gap-4 pt-6">
-                          <Button onClick={handleSave} className="w-32">Enregistrer</Button>
-                          <Button variant="outline" onClick={handleReset} className="w-32">Réinitialiser</Button>
-                        </div>
                       </Tabs>
+                      
+                      <Tabs defaultValue="upload" className="mt-8">
+                        <TabsList className="grid w-full grid-cols-2">
+                          <TabsTrigger value="upload">Télécharger une image de connexion</TabsTrigger>
+                          <TabsTrigger value="url">URL de l'image</TabsTrigger>
+                        </TabsList>
+                        
+                        <TabsContent value="upload" className="space-y-4">
+                          <div className="space-y-2">
+                            <Label>Télécharger une image de connexion</Label>
+                            <div className="flex flex-col items-center justify-center gap-4 p-6 border-2 border-dashed rounded-md">
+                              <input 
+                                type="file" 
+                                ref={loginImageInputRef}
+                                className="hidden" 
+                                accept="image/*"
+                                onChange={async (e) => {
+                                  const file = e.target.files?.[0]
+                                  if (!file) return
+
+                                  try {
+                                    setIsUploading(true)
+                                    const uniqueFileName = generateUniqueFileName(file.name)
+                                    const path = `login-images/${uniqueFileName}`
+                                    const downloadURL = await uploadFile(file, path)
+                                    
+                                    setLoginImageUrl(downloadURL)
+                                    setPreviewLoginImage(downloadURL)
+                                    toast.success("Image de connexion téléchargée avec succès")
+                                  } catch (error) {
+                                    toast.error("Erreur lors du téléchargement de l'image de connexion")
+                                    console.error(error)
+                                  } finally {
+                                    setIsUploading(false)
+                                  }
+                                }}
+                              />
+                              <Button 
+                                type="button" 
+                                variant="outline" 
+                                onClick={triggerLoginImageInput}
+                                disabled={isUploading}
+                                className="w-full max-w-xs"
+                              >
+                                {isUploading ? (
+                                  <>
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    Téléchargement...
+                                  </>
+                                ) : (
+                                  "Sélectionner une image"
+                                )}
+                              </Button>
+                              <p className="text-sm text-muted-foreground text-center">
+                                PNG, JPG ou GIF. Taille maximale 5MB.
+                              </p>
+                            </div>
+                          </div>
+                        </TabsContent>
+                        
+                        <TabsContent value="url" className="space-y-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="login-image-url">URL de l'image de connexion</Label>
+                            <Input
+                              id="login-image-url"
+                              placeholder="https://exemple.com/login-image.png"
+                              value={loginImageUrl}
+                              onChange={(e) => {
+                                setLoginImageUrl(e.target.value)
+                                setPreviewLoginImage(e.target.value)
+                              }}
+                            />
+                            <p className="text-sm text-muted-foreground">
+                              Entrez l'URL d'une image pour l'utiliser comme image de connexion
+                            </p>
+                          </div>
+                        </TabsContent>
+                        
+                        {previewLoginImage && (
+                          <div className="mt-6 space-y-2">
+                            <Label>Aperçu de l'image de connexion</Label>
+                            <div className="flex items-center justify-center gap-4 p-4 rounded-md border">
+                              <div className="flex items-center justify-center">
+                                <div className="relative w-[200px] h-[150px]">
+                                  <Image
+                                    src={previewLoginImage}
+                                    alt="Login image preview"
+                                    fill
+                                    className="object-contain"
+                                    onError={() => {
+                                      toast.error("Impossible de charger l'image")
+                                      setPreviewLoginImage(null)
+                                    }}
+                                  />
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </Tabs>
+                      
+                      <div className="flex justify-center gap-4 pt-6">
+                        <Button onClick={handleSave} className="w-32">Enregistrer</Button>
+                        <Button variant="outline" onClick={handleReset} className="w-32">Réinitialiser</Button>
+                      </div>
                     </CardContent>
                   </Card>
                 </div>

@@ -10,6 +10,7 @@ import { ExternalLink } from "lucide-react"
 import { Invoice } from "@/types"
 import { getAllInvoicesWithClientInfo } from "@/lib/services/invoiceService"
 import { formatDate } from "@/lib/utils/date-utils"
+import { getInvoiceStatusLabel, getInvoiceStatusColor } from "@/lib/utils/invoice-utils"
 
 export function InvoicesTable() {
   const router = useRouter()
@@ -54,42 +55,6 @@ export function InvoicesTable() {
     } catch (error) {
       console.error("Erreur lors du formatage du montant:", error)
       return "-"
-    }
-  }
-
-  // Fonction pour déterminer la couleur du badge en fonction du statut
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "paid":
-        return "bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100"
-      case "sent":
-        return "bg-yellow-100 text-yellow-800 dark:bg-yellow-800 dark:text-yellow-100"
-      case "overdue":
-        return "bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100"
-      case "draft":
-        return "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-100"
-      case "cancelled":
-        return "bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100"
-      default:
-        return "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-100"
-    }
-  }
-
-  // Fonction pour traduire le statut en français
-  const translateStatus = (status: string) => {
-    switch (status) {
-      case "paid":
-        return "Payée"
-      case "sent":
-        return "Envoyée"
-      case "overdue":
-        return "En retard"
-      case "draft":
-        return "Brouillon"
-      case "cancelled":
-        return "Annulée"
-      default:
-        return status
     }
   }
 
@@ -148,8 +113,8 @@ export function InvoicesTable() {
                   <TableCell>{invoice.ref_client || "-"}</TableCell>
                   <TableCell>{formatDate(invoice.date_validation || invoice.date)}</TableCell>
                   <TableCell>
-                    <Badge className={getStatusColor(invoice.status)} variant="outline">
-                      {translateStatus(invoice.status)}
+                    <Badge className={getInvoiceStatusColor(invoice.status)} variant="outline">
+                      {getInvoiceStatusLabel(invoice.status)}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right">{formatAmount(invoice.multicurrency_total_ht || invoice.subtotal)}</TableCell>

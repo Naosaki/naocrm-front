@@ -14,6 +14,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { formatDate } from "@/lib/utils/date-utils";
+import { DataTablePagination } from "@/components/ui/data-table-pagination";
 
 export default function ProductsPage() {
   const { user, loading } = useAuth();
@@ -26,14 +27,31 @@ export default function ProductsPage() {
     lowStockProducts: 0,
     outOfStockProducts: 0
   });
+  
+  // États pour la pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   // Redirection si l'utilisateur n'est pas authentifié ou n'est pas admin
   useEffect(() => {
-    if (!loading && !user) {
-      router.push("/login");
-    } else if (!loading && user && user.role !== "admin") {
-      router.push("/client");
+    // N'effectuer la redirection que si le chargement est terminé
+    if (loading) {
+      return;
     }
+    
+    // Redirection vers login si non authentifié
+    if (!user) {
+      router.push("/login");
+      return;
+    }
+    
+    // Redirection vers user-dashboard si l'utilisateur est explicitement client
+    if (user.role === "client") {
+      router.push("/user-dashboard");
+      return;
+    }
+    
+    // Si l'utilisateur est admin ou si le rôle est indéfini, on reste sur cette page
   }, [user, loading, router]);
 
   // Charger les produits depuis Firestore
@@ -49,6 +67,11 @@ export default function ProductsPage() {
           return dateB - dateA;
         });
         setProducts(productsData);
+        
+        // Récupérer les statistiques des produits
+        const statsData = await getProductsStats();
+        setStats(statsData);
+        
         setError(null);
       } catch (err) {
         console.error("Erreur lors du chargement des produits:", err);
@@ -62,38 +85,23 @@ export default function ProductsPage() {
       fetchProducts();
     }
   }, [loading, user]);
-
-  // Charger les statistiques
-  useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        const productsStats = await getProductsStats();
-        setStats(productsStats);
-      } catch (err) {
-        console.error("Erreur lors du chargement des statistiques:", err);
-      }
-    };
-
-    if (!loading && user) {
-      fetchStats();
-    }
-  }, [loading, user]);
-
-  // Fonction pour formater le prix (utilisé pour les statistiques)
-  const formatPrice = (price: number | undefined) => {
-    if (price === undefined) return "-";
-    return new Intl.NumberFormat('fr-FR', {
-      style: 'currency',
-      currency: 'EUR'
-    }).format(price);
+  
+  // Changer de page
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
   };
-
-  // Fonction pour obtenir la couleur du badge de stock
-  const getStockColor = (stock: number) => {
-    if (stock <= 5) return "bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100";
-    if (stock <= 20) return "bg-yellow-100 text-yellow-800 dark:bg-yellow-800 dark:text-yellow-100";
-    return "bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100";
+  
+  // Changer le nombre d'éléments par page
+  const handlePageSizeChange = (size: number) => {
+    setPageSize(size);
+    setCurrentPage(1); // Revenir à la première page lors du changement de taille
   };
+  
+  // Calculer les produits à afficher pour la page actuelle
+  const paginatedProducts = products.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  );
 
   if (loading || !user) {
     return (
@@ -174,32 +182,43 @@ export default function ProductsPage() {
                         Aucun produit trouvé. Ajoutez votre premier produit en cliquant sur le bouton ci-dessus.
                       </div>
                     ) : (
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>Référence</TableHead>
-                            <TableHead>Libellé</TableHead>
-                            <TableHead>Date de création</TableHead>
-                            <TableHead>Description</TableHead>
-                            <TableHead className="text-right">Stock réel</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {products.map((product) => (
-                            <TableRow key={product.id} className="cursor-pointer hover:bg-muted/50" onClick={() => router.push(`/admin/products/${product.id}`)}>
-                              <TableCell className="font-medium">{product.ref || "-"}</TableCell>
-                              <TableCell>{product.label || "-"}</TableCell>
-                              <TableCell>{formatDate(product.date_creation)}</TableCell>
-                              <TableCell className="max-w-xs truncate">{product.description || "-"}</TableCell>
-                              <TableCell className="text-right">
-                                <Badge className={getStockColor(product.stock_reel || 0)} variant="outline">
-                                  {product.stock_reel || 0}
-                                </Badge>
-                              </TableCell>
+                      <>
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Référence</TableHead>
+                              <TableHead>Libellé</TableHead>
+                              <TableHead>Date de création</TableHead>
+                              <TableHead>Description</TableHead>
+                              <TableHead className="text-right">Stock réel</TableHead>
                             </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
+                          </TableHeader>
+                          <TableBody>
+                            {paginatedProducts.map((product) => (
+                              <TableRow key={product.id} className="cursor-pointer hover:bg-muted/50" onClick={() => router.push(`/admin/products/${product.id}`)}>
+                                <TableCell className="font-medium">{product.ref || "-"}</TableCell>
+                                <TableCell>{product.label || "-"}</TableCell>
+                                <TableCell>{formatDate(product.date_creation)}</TableCell>
+                                <TableCell className="max-w-xs truncate">{product.description || "-"}</TableCell>
+                                <TableCell className="text-right">
+                                  <Badge className={getStockColor(product.stock_reel || 0)} variant="outline">
+                                    {product.stock_reel || 0}
+                                  </Badge>
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                        
+                        {/* Composant de pagination */}
+                        <DataTablePagination
+                          totalItems={products.length}
+                          pageSize={pageSize}
+                          currentPage={currentPage}
+                          onPageChange={handlePageChange}
+                          onPageSizeChange={handlePageSizeChange}
+                        />
+                      </>
                     )}
                   </CardContent>
                 </Card>
@@ -211,3 +230,10 @@ export default function ProductsPage() {
     </SidebarProvider>
   );
 }
+
+// Fonction pour obtenir la couleur du badge de stock
+const getStockColor = (stock: number) => {
+  if (stock <= 5) return "bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100";
+  if (stock <= 20) return "bg-yellow-100 text-yellow-800 dark:bg-yellow-800 dark:text-yellow-100";
+  return "bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100";
+};
