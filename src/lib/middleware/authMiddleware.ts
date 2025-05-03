@@ -47,8 +47,8 @@ export async function isAdmin(req: NextRequest) {
   try {
     // Vérifier d'abord si l'utilisateur est authentifié
     const authResult = await isAuthenticated(req);
-    if (!authResult.authenticated) {
-      return { isAdmin: false, error: authResult.error };
+    if (!authResult.authenticated || !authResult.uid) {
+      return { isAdmin: false, error: authResult.error || 'UID utilisateur manquant' };
     }
 
     // Récupérer les données de l'utilisateur depuis Firestore
