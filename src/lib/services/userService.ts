@@ -20,12 +20,13 @@ type FirestoreData = Record<string, unknown>;
 const convertTimestamps = (data: FirestoreData): User => {
   const result = { ...data };
   if (result.createdAt && result.createdAt instanceof Timestamp) {
-    result.createdAt = result.createdAt.toDate();
+    result.createdAt = (result.createdAt as Timestamp).toDate();
   }
   if (result.lastLogin && result.lastLogin instanceof Timestamp) {
-    result.lastLogin = result.lastLogin.toDate();
+    result.lastLogin = (result.lastLogin as Timestamp).toDate();
   }
-  return result as User;
+  // Conversion su00fbre en utilisant une double assertion de type
+  return result as unknown as User;
 };
 
 // Récupérer tous les utilisateurs
