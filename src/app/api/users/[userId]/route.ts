@@ -8,16 +8,14 @@ initAdminApp();
 // Obtenir l'instance Firestore
 const db = getFirestore();
 
-interface UserIdParams {
-  userId: string;
-}
+type UserIdParams = Promise<{ userId: string }>;
 
 export async function GET(
   request: NextRequest,
-  context: { params: UserIdParams }
+  { params }: { params: UserIdParams }
 ) {
   try {
-    const userId = (await context.params).userId;
+    const { userId } = await params;
 
     if (!userId) {
       return NextResponse.json(
