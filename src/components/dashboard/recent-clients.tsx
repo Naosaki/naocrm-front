@@ -1,6 +1,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { recentClients } from "@/app/admin/data/dashboard";
+import { recentClients } from "@/app/(authenticated)/admin/data/dashboard";
 
 export function RecentClients() {
   return (

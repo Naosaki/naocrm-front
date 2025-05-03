@@ -1,25 +1,32 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/context/AuthContext";
 import { AppSidebar } from "@/components/dashboard/app-sidebar";
 import { SiteHeader } from "@/components/dashboard/site-header";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
-import { getAllProspects } from "@/lib/services/thirdPartyService";
+import { getAllClients } from "@/lib/services/thirdPartyService";
+import { getAllClientsInvoiceStats } from "@/lib/services/invoiceService";
 import { ThirdParty } from "@/types";
 import { Button } from "@/components/ui/button";
 import { PlusCircle, Eye } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { formatPhoneNumber } from "@/lib/utils/phone-utils";
-import { DataTablePagination } from "@/components/ui/data-table-pagination";
+import { formatAmount } from "@/lib/utils/format-utils";
+import { Badge } from "@/components/ui/badge";
 import { ClientDetailsModal } from "@/components/dashboard/client-details-modal";
+import { DataTablePagination } from "@/components/ui/data-table-pagination";
 
-export default function ProspectsPage() {
+// Type pour les statistiques des clients
+type ClientStats = {
+  [clientCode: string]: { invoiceCount: number; totalAmount: number };
+};
+
+export default function ClientsPage() {
   const { user, loading } = useAuth();
-  const router = useRouter();
-  const [prospects, setProspects] = useState<ThirdParty[]>([]);
+  const [clients, setClients] = useState<ThirdParty[]>([]);
+  const [clientStats, setClientStats] = useState<ClientStats>({});
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
@@ -29,51 +36,36 @@ export default function ProspectsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
 
-  // Redirection si l'utilisateur n'est pas authentifié ou n'est pas admin
+  // Charger les clients et leurs statistiques depuis Firestore
   useEffect(() => {
-    // N'effectuer la redirection que si le chargement est terminé
-    if (loading) {
-      return;
-    }
-    
-    // Redirection vers login si non authentifié
-    if (!user) {
-      router.push("/login");
-      return;
-    }
-    
-    // Redirection vers user-dashboard si l'utilisateur n'est pas admin
-    if (user.role !== "admin") {
-      router.push("/user-dashboard");
-      return;
-    }
-    
-    // Si l'utilisateur est admin, on reste sur cette page
-  }, [user, loading, router]);
-
-  // Charger les prospects depuis Firestore
-  useEffect(() => {
-    const fetchProspects = async () => {
+    const fetchData = async () => {
       try {
         setIsLoading(true);
-        const prospectsData = await getAllProspects();
-        setProspects(prospectsData);
+        
+        // Récupérer les clients et leurs statistiques en parallèle
+        const [clientsData, statsData] = await Promise.all([
+          getAllClients(),
+          getAllClientsInvoiceStats()
+        ]);
+        
+        setClients(clientsData);
+        setClientStats(statsData);
         setError(null);
       } catch (err) {
-        console.error("Erreur lors du chargement des prospects:", err);
-        setError("Impossible de charger les prospects. Veuillez réessayer plus tard.");
+        console.error("Erreur lors du chargement des données:", err);
+        setError("Impossible de charger les données. Veuillez réessayer plus tard.");
       } finally {
         setIsLoading(false);
       }
     };
 
     if (!loading && user) {
-      fetchProspects();
+      fetchData();
     }
   }, [loading, user]);
-  
-  // Ouvrir la modal avec les détails du prospect
-  const handleViewProspect = (clientId: string) => {
+
+  // Ouvrir la modal avec les détails du client
+  const handleViewClient = (clientId: string) => {
     setSelectedClientId(clientId);
     setIsModalOpen(true);
   };
@@ -95,8 +87,8 @@ export default function ProspectsPage() {
     setCurrentPage(1); // Revenir à la première page lors du changement de taille
   };
   
-  // Calculer les prospects à afficher pour la page actuelle
-  const paginatedProspects = prospects.slice(
+  // Calculer les clients à afficher pour la page actuelle
+  const paginatedClients = clients.slice(
     (currentPage - 1) * pageSize,
     currentPage * pageSize
   );
@@ -118,19 +110,19 @@ export default function ProspectsPage() {
           <div className="@container/main flex flex-1 flex-col gap-2">
             <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
               <div className="flex items-center justify-between px-4 lg:px-6">
-                <h1 className="text-2xl font-semibold tracking-tight">Prospects</h1>
+                <h1 className="text-2xl font-semibold tracking-tight">Clients</h1>
                 <Button className="flex items-center gap-2">
                   <PlusCircle className="h-4 w-4" />
-                  Ajouter un prospect
+                  Ajouter un client
                 </Button>
               </div>
               
               <div className="px-4 lg:px-6">
                 <Card>
                   <CardHeader>
-                    <CardTitle>Liste des prospects</CardTitle>
+                    <CardTitle>Liste des clients</CardTitle>
                     <CardDescription>
-                      Gérez vos prospects et leurs informations. Les prospects sont des entreprises qui n&apos;ont pas encore de facture.
+                      Gérez vos clients et leurs informations.
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
@@ -140,9 +132,9 @@ export default function ProspectsPage() {
                       </div>
                     ) : error ? (
                       <div className="text-center py-8 text-red-500">{error}</div>
-                    ) : prospects.length === 0 ? (
+                    ) : clients.length === 0 ? (
                       <div className="text-center py-8 text-muted-foreground">
-                        Aucun prospect trouvé. Ajoutez votre premier prospect en cliquant sur le bouton ci-dessus.
+                        Aucun client trouvé. Ajoutez votre premier client en cliquant sur le bouton ci-dessus.
                       </div>
                     ) : (
                       <>
@@ -153,33 +145,48 @@ export default function ProspectsPage() {
                               <TableHead>Code Client</TableHead>
                               <TableHead>Email</TableHead>
                               <TableHead>Téléphone</TableHead>
+                              <TableHead className="text-center">Factures</TableHead>
+                              <TableHead className="text-right">Montant total HT</TableHead>
                               <TableHead className="text-center">Actions</TableHead>
                             </TableRow>
                           </TableHeader>
                           <TableBody>
-                            {paginatedProspects.map((prospect) => (
-                              <TableRow key={prospect.id}>
-                                <TableCell className="font-medium">{prospect.name}</TableCell>
-                                <TableCell className="font-medium text-primary">{prospect.code_client || "-"}</TableCell>
-                                <TableCell>{prospect.email}</TableCell>
-                                <TableCell>{formatPhoneNumber(prospect.phone)}</TableCell>
-                                <TableCell className="text-center">
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    onClick={() => handleViewProspect(prospect.id)}
-                                  >
-                                    <Eye className="h-4 w-4" />
-                                  </Button>
-                                </TableCell>
-                              </TableRow>
-                            ))}
+                            {paginatedClients.map((client) => {
+                              // Récupérer les statistiques du client
+                              const stats = clientStats[client.code_client || ''] || { invoiceCount: 0, totalAmount: 0 };
+                              
+                              return (
+                                <TableRow key={client.id}>
+                                  <TableCell className="font-medium">{client.name}</TableCell>
+                                  <TableCell className="font-medium text-primary">{client.code_client || "-"}</TableCell>
+                                  <TableCell>{client.email}</TableCell>
+                                  <TableCell>{formatPhoneNumber(client.phone)}</TableCell>
+                                  <TableCell className="text-center">
+                                    <Badge variant="outline" className="bg-blue-50 text-blue-700 hover:bg-blue-100">
+                                      {stats.invoiceCount}
+                                    </Badge>
+                                  </TableCell>
+                                  <TableCell className="text-right font-medium">
+                                    {formatAmount(stats.totalAmount)}
+                                  </TableCell>
+                                  <TableCell className="text-center">
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      onClick={() => handleViewClient(client.id)}
+                                    >
+                                      <Eye className="h-4 w-4" />
+                                    </Button>
+                                  </TableCell>
+                                </TableRow>
+                              );
+                            })}
                           </TableBody>
                         </Table>
                         
                         {/* Composant de pagination */}
                         <DataTablePagination
-                          totalItems={prospects.length}
+                          totalItems={clients.length}
                           pageSize={pageSize}
                           currentPage={currentPage}
                           onPageChange={handlePageChange}
@@ -195,7 +202,7 @@ export default function ProspectsPage() {
         </div>
       </SidebarInset>
       
-      {/* Modal pour afficher les détails du prospect */}
+      {/* Modal pour afficher les détails du client */}
       <ClientDetailsModal
         clientId={selectedClientId}
         isOpen={isModalOpen}

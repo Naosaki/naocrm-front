@@ -27,16 +27,6 @@ export default function ClientInvoicesPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
 
-  // Redirection si l'utilisateur n'est pas authentifié ou n'est pas client
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push("/login");
-    } else if (!loading && user && user.role !== "client" && user.role !== "admin") {
-      // Rediriger uniquement si l'utilisateur n'est ni client ni admin
-      router.push("/admin");
-    }
-  }, [user, loading, router]);
-
   // Charger les factures du client
   useEffect(() => {
     const fetchInvoices = async () => {

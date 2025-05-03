@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { statsData } from "@/app/admin/data/dashboard";
+import { statsData } from "@/app/(authenticated)/admin/data/dashboard";
 
 export function StatsCards() {
   return (

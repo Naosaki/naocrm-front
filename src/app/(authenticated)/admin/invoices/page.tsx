@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/context/AuthContext";
 import { AppSidebar } from "@/components/dashboard/app-sidebar";
 import { SiteHeader } from "@/components/dashboard/site-header";
@@ -19,7 +18,6 @@ import { DataTablePagination } from "@/components/ui/data-table-pagination";
 
 export default function InvoicesPage() {
   const { user, loading } = useAuth();
-  const router = useRouter();
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -27,28 +25,6 @@ export default function InvoicesPage() {
   // États pour la pagination
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-
-  // Redirection si l'utilisateur n'est pas authentifié ou n'est pas admin
-  useEffect(() => {
-    // N'effectuer la redirection que si le chargement est terminé
-    if (loading) {
-      return;
-    }
-    
-    // Redirection vers login si non authentifié
-    if (!user) {
-      router.push("/login");
-      return;
-    }
-    
-    // Redirection vers user-dashboard si l'utilisateur n'est pas admin
-    if (user.role !== "admin") {
-      router.push("/user-dashboard");
-      return;
-    }
-    
-    // Si l'utilisateur est admin, on reste sur cette page
-  }, [user, loading, router]);
 
   // Charger les factures depuis Firestore
   useEffect(() => {

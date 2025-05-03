@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
@@ -26,15 +26,6 @@ export function LoginForm({
   const { user, loading } = useAuth();
   const { loginImage } = useSettingsStore()
 
-  // Rediriger si l'utilisateur est déjà connecté
-  useEffect(() => {
-    console.log("Login form - État utilisateur:", { loading, role: user?.role });
-    if (!loading && user) {
-      console.log("Utilisateur déjà connecté - Rôle:", user.role);
-      // Rediriger vers la page de redirection qui s'occupera d'envoyer l'utilisateur au bon dashboard
-      router.push("/redirect");
-    }
-  }, [user, loading, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,7 +37,11 @@ export function LoginForm({
       console.log("Résultat de connexion:", userData);
       if (userData) {
         console.log("Redirection vers la page de redirection");
-        router.push("/redirect");
+        if(userData.role === "admin"){
+          router.push("/admin");
+        }
+
+        router.push("/user-dashboard");
       }
       // La redirection sera gérée par la page de redirection
     } catch (err: unknown) {

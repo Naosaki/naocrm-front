@@ -20,28 +20,6 @@ export default function ClientProfilePage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Redirection si l'utilisateur n'est pas authentifiu00e9 ou n'est pas client
-  useEffect(() => {
-    // N'effectuer la redirection que si le chargement est terminu00e9
-    if (loading) {
-      return;
-    }
-    
-    // Redirection vers login si non authentifiu00e9
-    if (!user) {
-      router.push("/login");
-      return;
-    }
-    
-    // Redirection vers admin si l'utilisateur est explicitement admin
-    if (user.role === "admin") {
-      router.push("/admin");
-      return;
-    }
-    
-    // Si l'utilisateur est client ou si le ru00f4le est indu00e9fini, on reste sur cette page
-  }, [user, loading, router]);
-
   // Charger les informations du client
   useEffect(() => {
     const fetchClientInfo = async () => {

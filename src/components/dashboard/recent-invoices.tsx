@@ -1,7 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { recentInvoices } from "@/app/admin/data/dashboard";
+import { recentInvoices } from "@/app/(authenticated)/admin/data/dashboard";
 
 export function RecentInvoices() {
   // Fonction pour formater la date

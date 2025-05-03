@@ -2,7 +2,7 @@
 
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip } from "recharts";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { revenueData } from "@/app/admin/data/dashboard";
+import { revenueData } from "@/app/(authenticated)/admin/data/dashboard";
 
 export function RevenueChart() {
   return (

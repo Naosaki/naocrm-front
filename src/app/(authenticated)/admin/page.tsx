@@ -13,44 +13,6 @@ import { ProductsTable } from "@/components/dashboard/products-table";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 
 export default function AdminDashboard() {
-  const { user, loading } = useAuth();
-  const router = useRouter();
-
-  // Redirection si l'utilisateur n'est pas authentifié ou n'est pas admin
-  useEffect(() => {
-    console.log("Dashboard admin - Rôle:", user?.role);
-    // N'effectuer la redirection que si le chargement est terminé
-    if (loading) {
-      console.log("Chargement en cours, pas de redirection");
-      return;
-    }
-    
-    // Redirection vers login si non authentifié
-    if (!user) {
-      console.log("Redirection vers login: utilisateur non authentifié");
-      router.push("/login");
-      return;
-    }
-    
-    // Redirection vers user-dashboard si l'utilisateur n'est pas admin
-    // Vérifier explicitement que le rôle est 'admin', sinon rediriger
-    if (user.role !== "admin") {
-      console.log(`Redirection vers user-dashboard: rôle ${user.role} (non admin)`)
-      router.push("/user-dashboard")
-      return
-    }
-    
-    // Si l'utilisateur est admin, on reste sur cette page
-    console.log("Utilisateur authentifié correctement en tant qu'admin")
-  }, [user, loading, router]);
-
-  if (loading || !user) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
 
   return (
     <SidebarProvider>

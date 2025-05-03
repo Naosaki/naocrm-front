@@ -20,15 +20,6 @@ export default function ClientProfilePage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Redirection si l'utilisateur n'est pas authentifiu00e9 ou n'est pas client
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push("/login");
-    } else if (!loading && user && user.role !== "client") {
-      router.push("/admin");
-    }
-  }, [user, loading, router]);
-
   // Charger les informations du client
   useEffect(() => {
     const fetchClientInfo = async () => {

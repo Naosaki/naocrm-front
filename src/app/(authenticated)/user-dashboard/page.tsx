@@ -31,33 +31,6 @@ export default function ClientDashboard() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Redirection si l'utilisateur n'est pas authentifié ou n'est pas client
-  useEffect(() => {
-    console.log("Dashboard utilisateur - Rôle:", user?.role);
-    // N'effectuer la redirection que si le chargement est terminé
-    if (loading) {
-      console.log("Chargement en cours, pas de redirection");
-      return;
-    }
-    
-    // Redirection vers login si non authentifié
-    if (!user) {
-      console.log("Redirection vers login: utilisateur non authentifié");
-      router.push("/login");
-      return;
-    }
-    
-    // Redirection vers admin si l'utilisateur est admin
-    if (user.role === "admin") {
-      console.log(`Redirection vers admin: rôle admin`);
-      router.push("/admin");
-      return;
-    }
-    
-    // Si l'utilisateur est client ou si le rôle est indéfini, on reste sur cette page
-    console.log("Utilisateur authentifié correctement:", user.role);
-  }, [user, loading, router]);
-
   // Charger les factures et statistiques du client
   useEffect(() => {
     const fetchClientData = async () => {

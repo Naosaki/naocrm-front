@@ -1,7 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
-import { useRouter } from "next/navigation"
+import { useState, useRef } from "react"
 import Image from "next/image"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -19,7 +18,6 @@ import { Loader2 } from "lucide-react"
 
 export default function SettingsPage() {
   const { user, loading } = useAuth()
-  const router = useRouter()
   const { logo, setLogo, loginImage, setLoginImage } = useSettingsStore()
   const [logoUrl, setLogoUrl] = useState<string>(logo || "")
   const [previewLogo, setPreviewLogo] = useState<string | null>(logo)
@@ -28,28 +26,6 @@ export default function SettingsPage() {
   const [isUploading, setIsUploading] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const loginImageInputRef = useRef<HTMLInputElement>(null)
-
-  // Redirection si l'utilisateur n'est pas authentifié ou n'est pas admin
-  useEffect(() => {
-    // N'effectuer la redirection que si le chargement est terminé
-    if (loading) {
-      return;
-    }
-    
-    // Redirection vers login si non authentifié
-    if (!user) {
-      router.push("/login");
-      return;
-    }
-    
-    // Redirection vers user-dashboard si l'utilisateur n'est pas admin
-    if (user.role !== "admin") {
-      router.push("/user-dashboard");
-      return;
-    }
-    
-    // Si l'utilisateur est admin, on reste sur cette page
-  }, [user, loading, router])
 
   const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setLogoUrl(e.target.value)
