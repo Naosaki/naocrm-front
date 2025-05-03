@@ -135,12 +135,12 @@ export default function ClientProfilePage() {
                 {clientInfo ? (
                   <div className="space-y-4">
                     <div>
-                      <p className="text-sm font-medium text-muted-foreground">Nom de l'entreprise</p>
+                      <p className="text-sm font-medium text-muted-foreground">Nom de l&apos;entreprise</p>
                       <p className="font-medium">{clientInfo.name}</p>
                     </div>
                     <div>
                       <p className="text-sm font-medium text-muted-foreground">Code client</p>
-                      <p>{clientInfo.code_client || 'Non disponible'}</p>
+                      <p>{clientInfo.code_client || "Non disponible"}</p>
                     </div>
                     <div>
                       <p className="text-sm font-medium text-muted-foreground">Email</p>
@@ -188,7 +188,7 @@ export default function ClientProfilePage() {
                   </div>
                 ) : (
                   <div className="text-center py-8 text-muted-foreground">
-                    Aucune information d'entreprise disponible.
+                    Aucune information d&apos;entreprise disponible.
                   </div>
                 )}
               </CardContent>

@@ -120,7 +120,7 @@ export default function ClientInvoicesPage() {
             <CardHeader>
               <CardTitle>Historique des factures</CardTitle>
               <CardDescription>
-                Consultez l'ensemble de vos factures et leur statut.
+                Consultez l&apos;ensemble de vos factures et leur statut.
               </CardDescription>
             </CardHeader>
             <CardContent>

@@ -211,7 +211,7 @@ export function CreateClientUserModal({ isOpen, onClose, onUserCreated }: Create
                       <Input placeholder="Entrez le code client" {...field} />
                     </FormControl>
                     <FormDescription>
-                      Le code client se trouve dans la fiche client (champ "code_client").
+                      Le code client se trouve dans la fiche client (champ &quot;code_client&quot;).
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -236,12 +236,12 @@ export function CreateClientUserModal({ isOpen, onClose, onUserCreated }: Create
                 name="displayName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Nom d'affichage</FormLabel>
+                    <FormLabel>Nom d&apos;affichage</FormLabel>
                     <FormControl>
-                      <Input placeholder="Nom d'affichage" {...field} />
+                      <Input placeholder="Nom d&apos;affichage" {...field} />
                     </FormControl>
                     <FormDescription>
-                      Nom qui sera affiché dans l'interface.
+                      Nom qui sera affiché dans l&apos;interface.
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -257,7 +257,7 @@ export function CreateClientUserModal({ isOpen, onClose, onUserCreated }: Create
                       <Input type="email" placeholder="email@exemple.com" {...field} />
                     </FormControl>
                     <FormDescription>
-                      L'adresse email sera utilisée pour se connecter.
+                      L&apos;adresse email sera utilisée pour se connecter.
                     </FormDescription>
                     <FormMessage />
                   </FormItem>

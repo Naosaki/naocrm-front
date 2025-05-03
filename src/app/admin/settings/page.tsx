@@ -127,7 +127,7 @@ export default function SettingsPage() {
                     <CardHeader className="text-center">
                       <CardTitle>Personnalisation</CardTitle>
                       <CardDescription>
-                        Personnalisez l'apparence de votre portail CRM
+                        Personnalisez l&#39;apparence de votre portail CRM
                       </CardDescription>
                     </CardHeader>
                     <CardContent>
@@ -181,7 +181,7 @@ export default function SettingsPage() {
                               onChange={handleLogoChange}
                             />
                             <p className="text-sm text-muted-foreground">
-                              Entrez l'URL d'une image pour l'utiliser comme logo
+                              Entrez l&#39;URL d&#39;une image pour l&#39;utiliser comme logo
                             </p>
                           </div>
                         </TabsContent>
@@ -198,7 +198,7 @@ export default function SettingsPage() {
                                     fill
                                     className="object-contain"
                                     onError={() => {
-                                      toast.error("Impossible de charger l'image")
+                                      toast.error("Impossible de charger l&#39;image")
                                       setPreviewLogo(null)
                                     }}
                                   />
@@ -212,7 +212,7 @@ export default function SettingsPage() {
                       <Tabs defaultValue="upload" className="mt-8">
                         <TabsList className="grid w-full grid-cols-2">
                           <TabsTrigger value="upload">Télécharger une image de connexion</TabsTrigger>
-                          <TabsTrigger value="url">URL de l'image</TabsTrigger>
+                          <TabsTrigger value="url">URL de l&#39;image</TabsTrigger>
                         </TabsList>
                         
                         <TabsContent value="upload" className="space-y-4">
@@ -238,7 +238,7 @@ export default function SettingsPage() {
                                     setPreviewLoginImage(downloadURL)
                                     toast.success("Image de connexion téléchargée avec succès")
                                   } catch (error) {
-                                    toast.error("Erreur lors du téléchargement de l'image de connexion")
+                                    toast.error("Erreur lors du téléchargement de l&#39;image de connexion")
                                     console.error(error)
                                   } finally {
                                     setIsUploading(false)
@@ -270,7 +270,7 @@ export default function SettingsPage() {
                         
                         <TabsContent value="url" className="space-y-4">
                           <div className="space-y-2">
-                            <Label htmlFor="login-image-url">URL de l'image de connexion</Label>
+                            <Label htmlFor="login-image-url">URL de l&#39;image de connexion</Label>
                             <Input
                               id="login-image-url"
                               placeholder="https://exemple.com/login-image.png"
@@ -281,14 +281,14 @@ export default function SettingsPage() {
                               }}
                             />
                             <p className="text-sm text-muted-foreground">
-                              Entrez l'URL d'une image pour l'utiliser comme image de connexion
+                              Entrez l&#39;URL d&#39;une image pour l&#39;utiliser comme image de connexion
                             </p>
                           </div>
                         </TabsContent>
                         
                         {previewLoginImage && (
                           <div className="mt-6 space-y-2">
-                            <Label>Aperçu de l'image de connexion</Label>
+                            <Label>Aperçu de l&#39;image de connexion</Label>
                             <div className="flex items-center justify-center gap-4 p-4 rounded-md border">
                               <div className="flex items-center justify-center">
                                 <div className="relative w-[200px] h-[150px]">
@@ -298,7 +298,7 @@ export default function SettingsPage() {
                                     fill
                                     className="object-contain"
                                     onError={() => {
-                                      toast.error("Impossible de charger l'image")
+                                      toast.error("Impossible de charger l&#39;image")
                                       setPreviewLoginImage(null)
                                     }}
                                   />
