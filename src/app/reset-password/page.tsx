@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { resetPassword } from '@/lib/auth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,7 +15,6 @@ export default function ResetPasswordPage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,9 +25,10 @@ export default function ResetPasswordPage() {
     try {
       await resetPassword(email);
       setSuccess('Un email de réinitialisation a été envoyé à votre adresse email.');
-    } catch (err: any) {
+    } catch (err: Error | unknown) {
       console.error('Erreur de réinitialisation:', err);
-      setError(err.message || 'Erreur lors de la réinitialisation. Veuillez réessayer.');
+      const errorMessage = err instanceof Error ? err.message : 'Erreur lors de la réinitialisation. Veuillez réessayer.';
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }

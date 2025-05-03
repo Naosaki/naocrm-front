@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Download, FileText, Euro } from "lucide-react";
+import { Download, FileText } from "lucide-react";
 import { getInvoicesByConnectedClient, getConnectedClientInvoiceStats } from "@/lib/services/invoiceService";
 import { Invoice } from "@/types";
 import { formatDate } from "@/lib/utils/date-utils";

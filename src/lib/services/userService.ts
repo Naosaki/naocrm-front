@@ -14,8 +14,10 @@ import { signUp } from "@/lib/auth";
 
 const COLLECTION = 'users';
 
+type FirestoreData = Record<string, unknown>;
+
 // Convertir les timestamps Firestore en dates JavaScript
-const convertTimestamps = (data: Record<string, any>): User => {
+const convertTimestamps = (data: FirestoreData): User => {
   const result = { ...data };
   if (result.createdAt && result.createdAt instanceof Timestamp) {
     result.createdAt = result.createdAt.toDate();
