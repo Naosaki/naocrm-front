@@ -24,17 +24,15 @@ export function LoginForm({
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
   const { user, loading } = useAuth();
-  const { loginImage, logo } = useSettingsStore()
+  const { loginImage } = useSettingsStore()
 
   // Rediriger si l'utilisateur est déjà connecté
   useEffect(() => {
     console.log("Login form - État utilisateur:", { loading, role: user?.role });
     if (!loading && user) {
       console.log("Utilisateur déjà connecté - Rôle:", user.role);
-      // Utiliser une variable pour éviter les redirections multiples
-      const redirectPath = user.role === 'admin' ? '/admin' : '/user-dashboard';
-      console.log(`Redirection vers ${redirectPath}`);
-      router.push(redirectPath);
+      // Rediriger vers la page de redirection qui s'occupera d'envoyer l'utilisateur au bon dashboard
+      router.push("/redirect");
     }
   }, [user, loading, router]);
 
@@ -46,14 +44,11 @@ export function LoginForm({
     try {
       const userData = await signIn(email, password);
       console.log("Résultat de connexion:", userData);
-      if (userData && 'role' in userData) {
-        console.log("Rôle détecté après connexion:", userData.role);
-        // Utiliser une variable pour éviter les redirections multiples
-        const redirectPath = userData.role === 'admin' ? '/admin' : '/user-dashboard';
-        console.log(`Redirection vers ${redirectPath}`);
-        router.push(redirectPath);
+      if (userData) {
+        console.log("Redirection vers la page de redirection");
+        router.push("/redirect");
       }
-      // Si pas de rôle, la redirection sera gérée par le useEffect ci-dessus
+      // La redirection sera gérée par la page de redirection
     } catch (err: unknown) {
       console.error('Erreur de connexion:', err);
       const errorMessage = err instanceof Error ? err.message : 'Erreur lors de la connexion. Veuillez réessayer.';
@@ -67,23 +62,11 @@ export function LoginForm({
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card className="overflow-hidden p-0">
         <CardContent className="grid p-0 md:grid-cols-2">
-          <form onSubmit={handleSubmit} className="flex-1 p-6">
-            <div className="flex flex-col space-y-6">
-              <div className="flex flex-col items-center space-y-2 text-center">
-                {logo ? (
-                  <div className="relative w-[200px] h-[60px] mb-4">
-                    <Image
-                      src={logo}
-                      alt="Logo"
-                      fill
-                      className="object-contain"
-                      priority
-                    />
-                  </div>
-                ) : (
-                  <h1 className="text-2xl font-bold">Bienvenue</h1>
-                )}
-                <p className="text-muted-foreground">
+          <form className="p-6 md:p-8" onSubmit={handleSubmit}>
+            <div className="flex flex-col gap-6">
+              <div className="flex flex-col items-center text-center">
+                <h1 className="text-2xl font-bold">Bienvenue</h1>
+                <p className="text-muted-foreground text-balance">
                   Connectez-vous à votre espace CRM
                 </p>
               </div>

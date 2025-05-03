@@ -8,17 +8,7 @@ const nextConfig = {
       'avatars.githubusercontent.com',
     ],
   },
-  // Désactiver les vérifications ESLint lors du build
-  eslint: {
-    // Avertissement au lieu d'erreur (true = erreurs ignorées)
-    ignoreDuringBuilds: true,
-  },
-  // Désactiver les vérifications TypeScript lors du build
-  typescript: {
-    // Avertissement au lieu d'erreur (true = erreurs ignorées)
-    ignoreBuildErrors: true,
-  },
-  // Autres configurations si nécessaires
+  // Autres configurations si nu00e9cessaires
 };
 
 module.exports = nextConfig;

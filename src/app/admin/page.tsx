@@ -33,15 +33,15 @@ export default function AdminDashboard() {
     }
     
     // Redirection vers user-dashboard si l'utilisateur n'est pas admin
-    // Mais uniquement si le rôle est explicitement défini comme 'client'
-    if (user.role === "client") {
-      console.log(`Redirection vers user-dashboard: rôle client`);
-      router.push("/user-dashboard");
-      return;
+    // Vérifier explicitement que le rôle est 'admin', sinon rediriger
+    if (user.role !== "admin") {
+      console.log(`Redirection vers user-dashboard: rôle ${user.role} (non admin)`)
+      router.push("/user-dashboard")
+      return
     }
     
-    // Si l'utilisateur est admin ou si le rôle est indéfini, on reste sur cette page
-    console.log("Utilisateur authentifié correctement en tant que:", user.role);
+    // Si l'utilisateur est admin, on reste sur cette page
+    console.log("Utilisateur authentifié correctement en tant qu'admin")
   }, [user, loading, router]);
 
   if (loading || !user) {

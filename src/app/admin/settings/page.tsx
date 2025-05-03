@@ -42,13 +42,13 @@ export default function SettingsPage() {
       return;
     }
     
-    // Redirection vers user-dashboard si l'utilisateur est explicitement client
-    if (user.role === "client") {
+    // Redirection vers user-dashboard si l'utilisateur n'est pas admin
+    if (user.role !== "admin") {
       router.push("/user-dashboard");
       return;
     }
     
-    // Si l'utilisateur est admin ou si le rôle est indéfini, on reste sur cette page
+    // Si l'utilisateur est admin, on reste sur cette page
   }, [user, loading, router])
 
   const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -181,7 +181,7 @@ export default function SettingsPage() {
                               onChange={handleLogoChange}
                             />
                             <p className="text-sm text-muted-foreground">
-                              Entrez l'URL d'une image pour l'utiliser comme logo.
+                              Entrez l'URL d'une image pour l'utiliser comme logo
                             </p>
                           </div>
                         </TabsContent>
@@ -281,7 +281,7 @@ export default function SettingsPage() {
                               }}
                             />
                             <p className="text-sm text-muted-foreground">
-                              Entrez l'URL d'une image pour l'utiliser comme image de connexion.
+                              Entrez l'URL d'une image pour l'utiliser comme image de connexion
                             </p>
                           </div>
                         </TabsContent>

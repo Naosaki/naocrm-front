@@ -42,13 +42,13 @@ export default function ProspectsPage() {
       return;
     }
     
-    // Redirection vers user-dashboard si l'utilisateur est explicitement client
-    if (user.role === "client") {
+    // Redirection vers user-dashboard si l'utilisateur n'est pas admin
+    if (user.role !== "admin") {
       router.push("/user-dashboard");
       return;
     }
     
-    // Si l'utilisateur est admin ou si le rôle est indéfini, on reste sur cette page
+    // Si l'utilisateur est admin, on reste sur cette page
   }, [user, loading, router]);
 
   // Charger les prospects depuis Firestore
