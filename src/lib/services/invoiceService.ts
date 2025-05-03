@@ -18,8 +18,10 @@ import { Invoice, ThirdParty } from '@/types';
 
 const COLLECTION = 'invoices';
 
+type FirestoreData = Record<string, unknown>;
+
 // Convertir les timestamps Firestore en dates JavaScript
-const convertTimestamps = (data: Record<string, any>): Invoice => {
+const convertTimestamps = (data: FirestoreData): Invoice => {
   const result = { ...data };
   if (result.createdAt && result.createdAt instanceof Timestamp) {
     result.createdAt = result.createdAt.toDate();

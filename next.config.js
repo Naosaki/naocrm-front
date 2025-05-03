@@ -8,10 +8,6 @@ const nextConfig = {
       'avatars.githubusercontent.com',
     ],
   },
-  // Désactiver ESLint pendant le build pour permettre le déploiement
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
   // Autres configurations si nécessaires
 };
 

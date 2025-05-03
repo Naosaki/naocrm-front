@@ -1,7 +1,5 @@
-import { collection, getDocs, query, where, Timestamp } from 'firebase/firestore';
-import { db } from '../firebase';
-import { DashboardStats, Invoice } from '@/types';
 import { getAllInvoices, getInvoicesByThirdPartyId } from './invoiceService';
+import { DashboardStats } from '@/types';
 
 // Calculer les statistiques globales pour le tableau de bord administrateur
 export const getAdminDashboardStats = async (): Promise<DashboardStats> => {

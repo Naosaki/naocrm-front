@@ -83,7 +83,7 @@ export interface User {
   claims?: {
     role?: string;
     admin?: boolean;
-    [key: string]: any;
+    [key: string]: unknown;
   };
 }
 

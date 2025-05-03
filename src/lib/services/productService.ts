@@ -17,23 +17,25 @@ import { Product } from '@/types';
 
 const COLLECTION = 'products';
 
+type FirestoreData = Record<string, unknown>;
+
 // Convertir les timestamps Firestore en dates JavaScript
-const convertTimestamps = (data: Record<string, unknown>): Product => {
-  const result = { ...data } as Record<string, any>;
+const convertTimestamps = (data: FirestoreData): Product => {
+  const result = { ...data } as Record<string, unknown>;
   
   // Convertir les timestamps Firestore
   if (result.createdAt && result.createdAt instanceof Timestamp) {
-    result.createdAt = result.createdAt.toDate();
+    result.createdAt = (result.createdAt as Timestamp).toDate();
   }
   if (result.updatedAt && result.updatedAt instanceof Timestamp) {
-    result.updatedAt = result.updatedAt.toDate();
+    result.updatedAt = (result.updatedAt as Timestamp).toDate();
   }
   
   // Gérer le champ date_creation qui peut être un timestamp Firestore ou un timestamp UNIX
   if (result.date_creation) {
     if (result.date_creation instanceof Timestamp) {
       // Si c'est un timestamp Firestore, le convertir en Date
-      result.date_creation = result.date_creation.toDate();
+      result.date_creation = (result.date_creation as Timestamp).toDate();
     } else if (typeof result.date_creation === 'number') {
       // Si c'est un nombre (timestamp UNIX en secondes), le convertir en Date
       // Vérifier si c'est un timestamp en secondes (< 20000000000) ou en millisecondes

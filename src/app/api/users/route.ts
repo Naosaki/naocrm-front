@@ -42,12 +42,12 @@ export async function POST(request: NextRequest) {
     });
 
     return NextResponse.json({ success: true, userId: userRecord.uid });
-  } catch (error: any) {
+  } catch (error: Error | unknown) {
     console.error('Erreur lors de la création de l\'utilisateur:', error);
     
     // Gérer les erreurs spécifiques de Firebase Auth
     let errorMessage = 'Une erreur est survenue lors de la création du compte utilisateur';
-    let errorCode = error.code || 'unknown';
+    const errorCode = error && typeof error === 'object' && 'code' in error ? error.code : 'unknown';
     
     if (errorCode === 'auth/email-already-exists') {
       errorMessage = 'Cette adresse email est déjà utilisée';
@@ -82,7 +82,7 @@ export async function DELETE(request: NextRequest) {
     await db.collection('users').doc(userId).delete();
 
     return NextResponse.json({ success: true });
-  } catch (error: any) {
+  } catch (error: Error | unknown) {
     console.error('Erreur lors de la suppression de l\'utilisateur:', error);
     return NextResponse.json(
       { error: 'Une erreur est survenue lors de la suppression du compte utilisateur' },

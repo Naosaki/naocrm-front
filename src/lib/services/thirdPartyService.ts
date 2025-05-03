@@ -15,14 +15,16 @@ import { getAllInvoices } from './invoiceService';
 
 const COLLECTION = 'thirdparties';
 
+type FirestoreData = Record<string, unknown>;
+
 // Convertir les timestamps Firestore en dates JavaScript
-const convertTimestamps = (data: Record<string, any>): ThirdParty => {
+const convertTimestamps = (data: FirestoreData): ThirdParty => {
   const result = { ...data };
   if (result.createdAt && result.createdAt instanceof Timestamp) {
-    result.createdAt = result.createdAt.toDate();
+    result.createdAt = (result.createdAt as Timestamp).toDate();
   }
   if (result.updatedAt && result.updatedAt instanceof Timestamp) {
-    result.updatedAt = result.updatedAt.toDate();
+    result.updatedAt = (result.updatedAt as Timestamp).toDate();
   }
   return result as ThirdParty;
 };
